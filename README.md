@@ -1,6 +1,6 @@
 # WindFlow
 
-![The courtyard house turning while the air runs](media/courtyard-turntable.gif)
+![The courtyard house turning while the air runs](media/courtyard-turntable.webp)
 
 WindFlow is a free Windows app that shows architects how wind moves air through their building, and how much fresh air each room gets.
 
@@ -23,7 +23,16 @@ WindFlow is a free Windows app that shows architects how wind moves air through 
 - Lets you open and close windows and doors and see the result straight away.
 - Lets you edit rooms and openings, and save a PDF report.
 
-More detail: [docs/USING_THE_APP.md](docs/USING_THE_APP.md).
+## Documentation
+
+- [User manual](docs/USING_THE_APP.md): how to use the app, step by step.
+- [How WindFlow works (2-page PDF)](docs/how-windflow-works.pdf): a short picture-led explainer.
+- [Technical Reference](docs/TECHNICAL_REFERENCE.md): the methods in detail ([PDF](docs/WindFlow-Technical-Reference.pdf)).
+- [Known limits](docs/LIMITATIONS.md): what it does not get right yet.
+- [Validation results](VALIDATION.md): how its answers compare with published measurements.
+- [Command line](docs/CLI.md): run it without the window.
+
+[<img src="docs/images/how-it-works-1.png" width="49%">](docs/how-windflow-works.pdf) [<img src="docs/images/how-it-works-2.png" width="49%">](docs/how-windflow-works.pdf)
 
 ## Download / run
 
@@ -78,7 +87,7 @@ Read the full list in [docs/LIMITATIONS.md](docs/LIMITATIONS.md) and the test re
 
 WindFlow splits the air around and inside the building into many small cubes. It then works out, step by step, how air moves from cube to cube (a "lattice-Boltzmann" solver). It can run on the graphics card for speed. You see the result as moving particles.
 
-More: [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md). Command-line options and the Revit export: [docs/CLI.md](docs/CLI.md).
+More: [docs/TECHNICAL_REFERENCE.md](docs/TECHNICAL_REFERENCE.md). Command-line options and the Revit export: [docs/CLI.md](docs/CLI.md).
 
 ## Project layout
 

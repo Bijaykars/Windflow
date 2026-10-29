@@ -58,7 +58,7 @@ next to the Preview grid), started cold from rest (the warm start from the Previ
 settled for 4x Core's planned warm-up (2x for a cold start, 1x for a thermal run; the last fifth of it is a probe window that sets the batch length ), then averaged in batches until every room's ACH range
 closes or the time budget runs out, then the rooms and air age on the fine grid. The app and the headless run use one driver for all of this (`AveragedPass`, batch 6f). Why: on the sample house a pass settled for the plain warm-up read the Living and
 Kitchen ACH 33-64 % high, warm or cold; cold 2x lands within 5-9 % of a long run, and the warm seed, which carries
-the Preview flow in, needs 4x to get within 4-8 % (see [HANDOFF](../HANDOFF.md); measured 2026-09-28, before the fixes of 2026-10-12; not in queue V). A calm bar shows "letting the air settle…", "averaging · 64 % · about 40 s left" (ETA from the
+the Preview flow in, needs 4x to get within 4-8 % (measured 2026-09-28, before the fixes of 2026-10-12; not in queue V). A calm bar shows "letting the air settle…", "averaging · 64 % · about 40 s left" (ETA from the
 measured steps/s; "…" when unknown) and, when the pass lands, "Averaged result ✓ settled" (a tick only when every room settled; a pass cut off by its time budget reads "Time limit reached" in amber, with no tick). The Accurate pass replaces the stepping (Preview stays
 resident but idle, so an edit warm-starts it at once) and the particles follow the fine field once it is
 averaging. Any flow-changing edit (wind, opening, device, environment, box) cancels it and restarts the cycle;
@@ -123,30 +123,30 @@ sweep, annual runs, PDF report, and video export.
 
 ## Screenshots
 
-These are `out/*.png` files produced by the app's own `--shot <path>` flag (see Quick start in the [README](../README.md)), not staged
-marketing images.
+These are screenshots produced by the app's own `--shot <path>` flag (see Quick start in the [README](../README.md)), not staged
+marketing images. The files are not included in the repository.
 
 | File | What it shows |
 |---|---|
-| `out/app-shell.png` | The shell: top bar, 3D viewport, results panel. |
-| `out/app-empty.png` | Empty state before a model is loaded. |
-| `out/app-live-before.png` / `out/app-live-after.png` | Before/after a window is toggled during a live run. |
-| `out/app-box.png` | Simulation box gizmo (drag the six face handles). |
-| `out/app-boxsolve.png` | Whole building, then a nested fine box around one room; the sidecar compares both runs' opening flows. |
-| `out/app-xray.png` | X-ray wall mode with a section cut. |
-| `out/app-thermal.png` | Thermal run with a temperature slice. |
-| `out/app-compare.png` | Hold A / Hold B / Compare (B − A). |
-| `out/app-advanced.png` | Expert mode, Studies tab: sweep and annual results. |
-| `out/app-basic.png` | Basic mode: the sample house solving, one room selected. |
-| `out/app-basic-notes.png` | Basic mode with the trust line's notes open (plain-language sentences). |
-| `out/app-expert.png` | Expert mode, Results tab. |
-| `out/app-settings.png` | The Settings popover (gear, top right). |
-| `out/app-basic-fresh.png` | Basic mode with the air age column filled in (minutes since the air came in). |
-| `out/app-device-presets.png` | Expert → Devices: the preset palette, a device selected with its numbers folded behind Details. |
-| `out/app-device-place.png` | Placing a ceiling fan: the ghost sits on the ceiling under the cursor, with the resolution verdict. |
-| `out/app-boxsolve.png` | A simulation box with its blend band drawn and "in blend band" tags on the openings in it. |
-| `out/app-locked.png` | A locked result: solver stopped, flow controls greyed, particles at the measured limit. |
-| `out/app-walk.png` | End of the scripted Basic walk (Sample, Run, wind, a window closed, Still air, PDF). |
-| `out/app-report-dialog.png` | The PDF report dialog. |
-| `out/app-bench.png` | Headless bench mode, Speed particle view. |
-| `out/app-still.png` | Still air particle view (amber cloud of cells below the still-air threshold). |
+| `app-shell.png` | The shell: top bar, 3D viewport, results panel. |
+| `app-empty.png` | Empty state before a model is loaded. |
+| `app-live-before.png` / `app-live-after.png` | Before/after a window is toggled during a live run. |
+| `app-box.png` | Simulation box gizmo (drag the six face handles). |
+| `app-boxsolve.png` | Whole building, then a nested fine box around one room; the sidecar compares both runs' opening flows. |
+| `app-xray.png` | X-ray wall mode with a section cut. |
+| `app-thermal.png` | Thermal run with a temperature slice. |
+| `app-compare.png` | Hold A / Hold B / Compare (B − A). |
+| `app-advanced.png` | Expert mode, Studies tab: sweep and annual results. |
+| `app-basic.png` | Basic mode: the sample house solving, one room selected. |
+| `app-basic-notes.png` | Basic mode with the trust line's notes open (plain-language sentences). |
+| `app-expert.png` | Expert mode, Results tab. |
+| `app-settings.png` | The Settings popover (gear, top right). |
+| `app-basic-fresh.png` | Basic mode with the air age column filled in (minutes since the air came in). |
+| `app-device-presets.png` | Expert → Devices: the preset palette, a device selected with its numbers folded behind Details. |
+| `app-device-place.png` | Placing a ceiling fan: the ghost sits on the ceiling under the cursor, with the resolution verdict. |
+| `app-boxsolve.png` | A simulation box with its blend band drawn and "in blend band" tags on the openings in it. |
+| `app-locked.png` | A locked result: solver stopped, flow controls greyed, particles at the measured limit. |
+| `app-walk.png` | End of the scripted Basic walk (Sample, Run, wind, a window closed, Still air, PDF). |
+| `app-report-dialog.png` | The PDF report dialog. |
+| `app-bench.png` | Headless bench mode, Speed particle view. |
+| `app-still.png` | Still air particle view (amber cloud of cells below the still-air threshold). |

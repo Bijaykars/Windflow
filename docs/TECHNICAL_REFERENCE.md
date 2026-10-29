@@ -891,4 +891,4 @@ The trust line under the panel shows the mass balance as a dot and a phrase, plu
 - **Wind:** EN 1991-1-4; Smirnov, turbulence decorrelation.
 - **Guidance values:** ASHRAE 62.1-2022; ASHRAE 55; ISO 7730.
 
-For developers: WindFlow has a command-line mode, documented in the source repository with the test suite and the full test records (raw data and scripts).
+For developers: WindFlow has a command-line mode, documented in the source repository. The full test records are kept by the author; the results are summarised in VALIDATION.md.
