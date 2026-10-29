@@ -1792,7 +1792,7 @@ public partial class MainWindow : Window
     /// <summary>THIRD-PARTY-NOTICES.txt sits next to the exe (WindFlow.App.csproj copies it; S5-01).</summary>
     void OnOpenLicences(object? sender, RoutedEventArgs e) => OpenShipped("THIRD-PARTY-NOTICES.txt", "licence notices");
 
-    /// <summary>RA-40: LICENSE.txt (the repo's LICENSE, AGPL v3) sits next to the exe as well (WindFlow.App.csproj copies it).</summary>
+    /// <summary>RA-40: LICENSE.txt (the repo's LICENSE, MIT) sits next to the exe as well (WindFlow.App.csproj copies it).</summary>
     void OnOpenLicence(object? sender, RoutedEventArgs e) => OpenShipped("LICENSE.txt", "licence");
 
     void OnOpenMethod(object? sender, RoutedEventArgs e) => OpenShipped("how-windflow-works.pdf", "How WindFlow works PDF");

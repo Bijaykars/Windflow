@@ -1,6 +1,6 @@
 # WindFlow
 
-![WindFlow](media/windflow-banner.jpg)
+![The courtyard house turning while the air runs](media/courtyard-turntable.gif)
 
 WindFlow is a free Windows app that shows architects how wind moves air through their building, and how much fresh air each room gets.
 
@@ -93,9 +93,7 @@ More: [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md). Command-line options and the
 
 ## License
 
-WindFlow is free and open source under the [GNU AGPL v3](LICENSE). You can use it, change it and share it. If you share a changed version, or run one as an online service, you must publish your changes under the same licence.
-
-Want to build WindFlow into a closed-source product? A commercial licence will be available later. Contact the owner.
+WindFlow is free and open source under the [MIT License](LICENSE). Anyone can use it, change it, share it or build it into their own product, free or paid, for any purpose. The one condition: keep the copyright and licence notice (credit WindFlow) in copies of the code.
 
 Third-party licences: [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
 
@@ -103,4 +101,4 @@ The list of bundled packages is in [docs/LICENSES.md](docs/LICENSES.md).
 
 ## Contributing
 
-Bug reports and ideas are welcome as issues. Outside code contributions (pull requests) are not accepted for now, so that a commercial licence can be offered later.
+Bug reports, ideas and pull requests are welcome. Contributions are accepted under the same MIT License.

@@ -40,7 +40,7 @@
   <ItemGroup>
     <!-- S5-01: the licence notices travel with the exe (build output and publish output, so pack.ps1 packages them). -->
     <None Include="..\..\THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <!-- RA-40: WindFlow's own licence (AGPL v3) travels with the exe too. -->
+    <!-- RA-40: WindFlow's own licence (MIT) travels with the exe too. -->
     <None Include="..\..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <!-- the designed 2-page "How WindFlow works" explainer travels with the exe (the method-pdf option copies it; Settings opens it). -->
     <None Include="..\..\docs\how-windflow-works.pdf" Link="how-windflow-works.pdf" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
