@@ -55,7 +55,12 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
+        Appearance.Apply(Options.Theme ?? settings.Theme);     // before the tree loads, so nothing flashes dark
         InitializeComponent();
+        ApplyTheme(Options.Theme ?? settings.Theme);
+        WindDial.Changed += OnWindDial;
+        WindPopup.Closed += (_, _) => windClosedAt = DateTime.UtcNow;
+        SyncWindPill();
         Viewport3D.GhostChanged += ghost => GhostToggle.IsChecked = ghost;
         Viewport3D.ParticlesChanged += on => ParticleToggle.IsChecked = on;
         Viewport3D.ViewChanged += ApplyView;
@@ -132,7 +137,7 @@ public partial class MainWindow : Window
     async void OnOpened(object? sender, EventArgs e)
     {
         FitToScreen();
-        if (TryGetPlatformHandle() is { } handle) Win32.UseDarkTitleBar(handle.Handle);
+        if (!Appearance.IsLight(Options.Theme ?? settings.Theme) && TryGetPlatformHandle() is { } handle) Win32.UseDarkTitleBar(handle.Handle);
         ApplyMode(settings.Advanced);
         InitGovernor();
         InitParticleSetting();
@@ -184,7 +189,7 @@ public partial class MainWindow : Window
             if (Options.ShotMode == "compare") { await CompareShotSequence(Options.Shot); return; }
             if (Options.ShotMode == "tour") { await TourShotSequence(Options.Shot); return; }
             if (Options.ShotMode is "basic" or "basic-notes" or "basic-fresh" or "device-presets" or "device-place" or "device-gizmo" or "expert" or "settings" or "locked" or "openings-add"
-                or "slice-basic" or "slice-expert" or "openings-add-basic" or "openings-prerun" or "picker-basic" or "picker-expert" or "rooms-merge" or "rooms-add" or "rooms-candidates" or "openings-restore")
+                or "slice-basic" or "slice-expert" or "openings-add-basic" or "openings-prerun" or "picker-basic" or "picker-expert" or "menu" or "wind" or "rooms-merge" or "rooms-add" or "rooms-candidates" or "openings-restore" or "pause")
             {
                 await ShellShotSequence(Options.Shot, Options.ShotMode);
                 return;
@@ -651,7 +656,8 @@ public partial class MainWindow : Window
         var particles = Viewport3D.Renderer.Particles;
         bool still = particles.View == ParticleView.Still;
         float top = particles.Ready ? particles.SpeedMax : volume?.SpeedMax ?? 0;
-        LegendBar.Background = still ? Palette.StillBrush() : Palette.SpeedBrush();
+        LegendBar.Background = still ? Palette.StillBrush()
+            : Palette.SpeedBrush(ViewportPalette.For(Viewport3D.Renderer.LightTheme).LegendGain);
         LegendTitle.Text = still ? "STILL AIR" : "SPEED";
         LegendMin.Text = still ? "0" : "0";
         LegendMax.Text = still ? $"< {particles.StillThreshold:0.00} m/s" : top > 0 ? $"{top:0.00} m/s" : "— m/s";
@@ -681,6 +687,9 @@ public partial class MainWindow : Window
         // Space used to flip the view mode or pause the solver halfway through a measured sequence.
         if (Options.BenchSeconds > 0 || !string.IsNullOrEmpty(Options.Shot) ||
             !string.IsNullOrEmpty(Options.ReportPath)) return;
+        // Ctrl+O / Ctrl+S: the project menu's own rows, from anywhere (a text box included)
+        if (e.KeyModifiers == KeyModifiers.Control && e.Key == Key.O) { if (OpenModelButton.IsEffectivelyEnabled) OnOpenModel(OpenModelButton, e); e.Handled = true; return; }
+        if (e.KeyModifiers == KeyModifiers.Control && e.Key == Key.S) { if (SaveModelButton.IsEffectivelyEnabled) OnSaveModel(SaveModelButton, e); e.Handled = true; return; }
         // Esc, one step per press: leave placement, then show all rooms again, then clear the selection.
         if (e.Key == Key.Escape && (placing != null || addingOpening || addingRoom)) { CancelPlacement(); StatusText.Text = "placement cancelled"; return; }
         if (e.Key == Key.Escape && e.Source is not TextBox) { if (isolateOn) SetIsolated(-1); else ClearSelection(); return; }
@@ -839,7 +848,7 @@ public partial class MainWindow : Window
                 inBand++;
                 blendTip = $"{near.Dist:0.##} m from the box's {BlendBand.FaceName(near.Face)} face, inside its {band:0.##} m blend " +
                            "band: the fine grid is pulled toward the coarse run there, so this flow is close to the whole-building one. " +
-                           "Grow box (viewport header) moves the faces clear.";
+                           "Fit box to openings (viewport header) moves the faces clear.";
             }
             var rooms = RoomsOf(op);
             openings[index] = new OpeningRow(
@@ -991,7 +1000,7 @@ public partial class MainWindow : Window
         RefreshTrust(solver!, stats);
         BoxResetButton.IsVisible = audit!.CutsIndoorAir || audit.DroppedRooms > 0 || solver!.BoxNote.Length > 0;
         BoxGrowButton.IsVisible = inBand > 0;
-        BoxGrowButton.Content = inBand > 0 ? $"Grow box ({inBand})" : "Grow box";
+        BoxGrowButton.Content = inBand > 0 ? $"Fit box to openings ({inBand})" : "Fit box to openings";
     }
 
     /// <summary>The openings in a room's walls: either side of the opening, just past the wall face, lies in the room
@@ -1214,7 +1223,7 @@ public partial class MainWindow : Window
         Log.Info($"export start: {path} · {renderer.Width}x{renderer.Height} · turntable {turntableSeconds:0.#} s");
         recorder.Start(path, renderer.Width, renderer.Height, renderer.ReadbackPitch, 30);
         renderer.BeginRecording(recorder, turntableSeconds);
-        RecordMenuItem.Header = "Stop recording";
+        RecordMenuText.Text = "Stop recording";
         StatusText.Text = turntableSeconds > 0
             ? $"recording a {turntableSeconds:0} s turntable to {Path.GetFileName(path)}…"
             : $"recording to {Path.GetFileName(path)}… Export ▸ Stop to finish";
@@ -1238,7 +1247,7 @@ public partial class MainWindow : Window
         exportTimer?.Stop();
         Viewport3D.Renderer.EndRecording();
         recorder.Stop();
-        RecordMenuItem.Header = "Record video";
+        RecordMenuText.Text = "Record video";
         exportDone = true;
         Log.Info($"export done: {recorder.Path} · {recorder.FramesWritten} frames, {recorder.FramesDropped} dropped · error {recorder.Error ?? "none"}");
         StatusText.Text = recorder.Error != null
@@ -1893,6 +1902,8 @@ public partial class MainWindow : Window
     {
         var r = Viewport3D.Renderer;
         ModelText.Text = r.ModelName;
+        SetProjectName(r.ModelName);
+        UpdateWorkflow();
         string particles = r.Particles.Ready && r.Particles.Enabled
             ? $" · {Format(r.Particles.Count)} particles"
             : "";
@@ -1905,6 +1916,7 @@ public partial class MainWindow : Window
         }
         GeometryText.Text = $"{r.Triangles:N0} triangles · {r.OpeningsOpen}/{r.OpeningsTotal} open{particles}{box} · {r.Width}×{r.Height}";
         PerfText.Text = r.Fps > 0 ? $"{r.FrameMs:0.0} ms · {r.Fps:0} fps" : "starting…";
+        r.Particles.Frozen = live is { Active: true, State: LiveSolver.Mode.Paused };   // Space, the button and every SetPaused land here; Stop/new run/model change leave Paused
         if (live is { Active: true } or { State: LiveSolver.Mode.Failed })
         {
             UpdateRunButton(live);
@@ -1962,6 +1974,7 @@ public partial class MainWindow : Window
         {
             lastWindText = windText;
             windVector = ReadWind();
+            SyncWindPill();
             if (model.Obstacles.Count > 0)
                 r.SetScene(Scene.Build(model, windVector, probes, selectedDevice, placeGhost, Overlay()), frameCamera: false);
             if (live is { Active: true } windLive) windLive.SetWind(windVector);   // debounced by this tick
@@ -2210,7 +2223,13 @@ public static class Palette
                              (byte)(Math.Min(1, (0.06 + 0.24 * s) * (0.55 + 0.45 * k)) * 255));
     }
 
-    public static IBrush SpeedBrush() => Ramp(t => Viridis(0.20 + 0.80 * t));
+    /// <summary>The trails' ramp. The command-bar legend passes the palette's trail gain (0.90 on Light, where
+    /// the particles are drawn a touch darker than pure Viridis); the slice legend passes none: the sheet is Viridis as is.</summary>
+    public static IBrush SpeedBrush(double gain = 1) => Ramp(t =>
+    {
+        var c = Viridis(0.20 + 0.80 * t);
+        return gain == 1 ? c : Color.FromRgb((byte)(c.R * gain), (byte)(c.G * gain), (byte)(c.B * gain));
+    });
 
     public static IBrush StillBrush() => Ramp(Still);
 

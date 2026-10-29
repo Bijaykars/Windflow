@@ -165,7 +165,7 @@ cbuffer Draw : register(b0)
     float OutdoorDim; float BaseAlpha;
     float StillAlpha; float StillCut;     // Still view: alpha scale and the cloud threshold (0 = Speed view)
     float3 HouseMin;  float RingLenF;
-    float3 HouseMax;  float DrawPad3;
+    float3 HouseMax;  float Theme;         // 0 dark, 1 light: the still-air lane colour
     float4 IsoMin;    float4 IsoMax;         // room isolate box, w > 0.5 enables
 };
 
@@ -213,14 +213,15 @@ TrailOut VSTrail(uint vid : SV_VertexID)
 
     // Weight by speed as well as by trail age, so stagnant air recedes into haze and the jets through
     // windows, doors and the stair void carry the image.
-    float moving = 0.26 + 0.74 * saturate(t.w / SpeedMax);
+    // On paper the slow end of Viridis is a dark ink, so still air gets less weight there and the jets keep theirs.
+    float moving = lerp(0.26, 0.14, Theme) + lerp(0.74, 0.86, Theme) * saturate(t.w / SpeedMax);
     float3 rgb = Viridis(0.20 + 0.80 * saturate(t.w / SpeedMax)) * Brightness;
     if (StillCut > 0.0)
     {
-        // Still view: cyan-white flow lanes. Air slower than the cloud threshold is the cloud's job, so it is
-        // not drawn at all and a lane only appears where there is no amber under it.
+        // Still view: cyan-white flow lanes (steel blue on paper). Air slower than the cloud threshold is the
+        // cloud's job, so it is not drawn at all and a lane only appears where there is no amber under it.
         moving = saturate((t.w - StillCut) / StillCut) * (0.35 + 0.65 * saturate(t.w / SpeedMax));
-        rgb = float3(0.62, 0.93, 1.00) * Brightness;
+        rgb = lerp(float3(0.62, 0.93, 1.00), float3(0.22, 0.48, 0.68), Theme) * Brightness;
     }
     float alpha = fade * fade * moving * BaseAlpha * StillAlpha * (indoor > 0.5 ? 1.0 : OutdoorDim);
     // Room isolate: tested per trail point, like the envelope, so a trail is cut exactly at the room's margin.
@@ -464,10 +465,11 @@ FSOut VSBackground(uint id : SV_VertexID)
     return o;
 }
 
+// Albedo is the centre colour and Light the rim, from the palette of the current Appearance.
 float4 PSBackground(FSOut i) : SV_Target
 {
     float d = saturate(length((i.uv - float2(0.5, 0.56)) * float2(1.0, 1.30)) * 1.5);
-    float3 c = lerp(float3(0.058, 0.077, 0.107), float3(0.020, 0.027, 0.039), d * d);
+    float3 c = lerp(Albedo.rgb, Light.rgb, d * d);
     return float4(c, 1.0);
 }
 
@@ -490,11 +492,13 @@ bool Clipped(float3 p)
 }
 
 
-// Hemisphere ambient: cool sky from +Z, near-black bounce from the ground.
+// Light.w is the Appearance: 0 dark, 1 light. The few lighting constants that live here lerp on it.
+// Hemisphere ambient: cool sky from +Z, near-black bounce from the ground; on paper a bright overcast sky
+// and a grey bounce, so a light wall shades softly instead of dropping to black.
 float3 Hemisphere(float3 n)
 {
-    const float3 sky    = float3(0.24, 0.31, 0.44);
-    const float3 ground = float3(0.030, 0.034, 0.042);
+    float3 sky    = lerp(float3(0.24, 0.31, 0.44), float3(0.60, 0.64, 0.70), Light.w);
+    float3 ground = lerp(float3(0.030, 0.034, 0.042), float3(0.34, 0.35, 0.37), Light.w);
     return lerp(ground, sky, saturate(n.z * 0.5 + 0.5));
 }
 
@@ -502,8 +506,8 @@ float3 Clay(float3 n, float3 v, float3 albedo)
 {
     float3 l   = normalize(-Light.xyz);
     float  ndl = saturate(dot(n, l));
-    float3 sun = float3(1.00, 0.95, 0.88) * ndl * 1.40;
-    float3 fill = float3(0.20, 0.30, 0.45) * saturate(dot(n, normalize(float3(0.55, -0.75, 0.15)))) * 0.35;
+    float3 sun = float3(1.00, 0.95, 0.88) * ndl * lerp(1.40, 1.05, Light.w);
+    float3 fill = float3(0.20, 0.30, 0.45) * saturate(dot(n, normalize(float3(0.55, -0.75, 0.15)))) * lerp(0.35, 0.20, Light.w);
     return albedo * (Hemisphere(n) + sun + fill);
 }
 
@@ -516,7 +520,8 @@ float4 PSClay(VSOut i) : SV_Target
     float3 v = normalize(Eye.xyz - i.wpos);
     float3 n = FaceNormal(i.nrm, v);
     float3 c = Clay(n, v, Albedo.rgb);
-    c += pow(1.0 - saturate(dot(n, v)), 3.5) * float3(0.07, 0.16, 0.26);   // cool rim
+    // Cool rim on dark; on light the rim darkens instead, so the silhouette separates from the sheet.
+    c += pow(1.0 - saturate(dot(n, v)), 3.5) * lerp(float3(0.07, 0.16, 0.26), float3(-0.12, -0.10, -0.07), Light.w);
     return float4(Gamma(c), 1.0);
 }
 
@@ -527,7 +532,8 @@ float4 PSGhost(VSOut i) : SV_Target
     float3 v = normalize(Eye.xyz - i.wpos);
     float3 n = FaceNormal(i.nrm, v);
     float  f = 1.0 - saturate(dot(n, v));
-    float3 c = Clay(n, v, Albedo.rgb) * 0.85 + float3(0.06, 0.16, 0.27) * pow(f, 1.7);
+    // Blue fresnel glow on dark; on light the grazing faces go darker and cooler, so the volume still has an edge.
+    float3 c = Clay(n, v, Albedo.rgb) * 0.85 + lerp(float3(0.06, 0.16, 0.27), float3(-0.10, -0.07, -0.02), Light.w) * pow(f, 1.7);
     float  a = saturate(Albedo.a * (0.30 + 0.70 * pow(f, 1.4)));
     return float4(Gamma(c) * a, a);
 }

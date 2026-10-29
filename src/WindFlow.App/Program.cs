@@ -72,6 +72,7 @@ public static class Options
     public static string? Shot;          // --shot <path>: save one full-window screenshot and exit
     public static bool Empty;            // --empty: start with no model (for the empty-state screenshot)
     public static string ShotMode = "";  // --shotmode box|xray: what to set up before --shot fires
+    public static string? Theme;         // --theme light|dark: this run's appearance (not saved; a shot in either variant)
     public static string? Isolate;       // --isolate <room id or name>: isolate that room before a shell --shot fires
     public static int TourStep;          // --tour-step <n>: with --shotmode tour, photograph only step n (1-based); 0 = every step
     public static double TurntableSeconds;   // --export-turntable <seconds> <path>
@@ -128,6 +129,7 @@ public static class Options
             else if (a is "--shot" && i + 1 < args.Length) Shot = args[++i];
             else if (a is "--empty") Empty = true;
             else if (a is "--shotmode" && i + 1 < args.Length) ShotMode = args[++i].ToLowerInvariant();
+            else if (a is "--theme" && i + 1 < args.Length) Theme = args[++i];
             else if (a is "--isolate" && i + 1 < args.Length) Isolate = args[++i];
             else if (a is "--tour-step" && i + 1 < args.Length && int.TryParse(args[++i], out int ts)) TourStep = ts;
             else if (a is "--report" && i + 1 < args.Length) ReportPath = args[++i];

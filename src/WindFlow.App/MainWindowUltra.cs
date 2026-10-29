@@ -21,7 +21,7 @@ public partial class MainWindow
     {
         var title = new TextBlock { Text = heading };
         title.Classes.Add("section");
-        no.Classes.Add("tool"); yes.Classes.Add("tool");
+        no.Classes.Add("secondary"); yes.Classes.Add("tool"); yes.Classes.Add("accent");
         var panel = new StackPanel { Margin = new Avalonia.Thickness(20), Spacing = 10 };
         panel.Children.Add(title);
         foreach (var c in body) panel.Children.Add(c);
@@ -30,7 +30,7 @@ public partial class MainWindow
         {
             Title = heading, Width = width, SizeToContent = SizeToContent.Height, CanResize = false,
             WindowStartupLocation = WindowStartupLocation.CenterOwner, FontFamily = FontFamily,
-            Background = this.FindResource("Panel") as Avalonia.Media.IBrush, RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Dark,
+            Background = this.FindResource("Panel") as Avalonia.Media.IBrush,
             Content = panel,
         };
     }

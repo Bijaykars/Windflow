@@ -15,9 +15,10 @@ WindFlow.App.exe [model.json]
   --box xmin,ymin,zmin,xmax,ymax,zmax   nest a fine box (half the cell size) in the whole-building solve
   --box-v1                       with --box: the old v1 box (the box is the whole domain, open faces)
   --shot <path>                  save one full-window screenshot and exit
-  --shotmode box|xray|advanced|compare|boxsolve|rooms|basic|basic-notes|basic-fresh|expert|settings|locked|
-             device-presets|device-place|device-boxed|walk|mesh-openings|accurate|accurate-time|tour
+  --shotmode box|xray|advanced|compare|boxsolve|rooms|basic|basic-notes|basic-fresh|expert|settings|locked|menu|wind|
+             device-presets|device-place|device-boxed|walk|mesh-openings|accurate|accurate-time|tour|pause
                                  scene to set up before --shot fires (walk: with --empty, the Basic flow end to end)
+  --theme light|dark             this run's appearance (Settings → Appearance is the saved one); with --shot, the variant to photograph
   --tour-step <n>                with --shotmode tour: photograph only step n (1-based; steps 3+ load the sample, 5+ start the preview run); without it every step lands as <stem>01..12.png plus <stem>-after-skip.png
   --report <path>                 write one PDF report headlessly and exit
   --method-pdf <path>             write the "How WindFlow works" method PDF (no window, no solve) and exit

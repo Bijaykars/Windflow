@@ -56,26 +56,27 @@ public partial class MainWindow
     [
         new("Welcome to WindFlow",
             "WindFlow shows how wind moves fresh air through each room of a building, through the windows and doors in your model. " +
-            (EmptyState.IsVisible ? "This tour takes about two minutes: you load the sample house, start the air, and see where everything is."
-                                  : "This tour takes about two minutes and points out where things are on a real run."),
+            (EmptyState.IsVisible ? "This tour takes about two minutes: you load the sample house, start the air, and see where everything is. "
+                                  : "This tour takes about two minutes and points out where things are on a real run. ") +
+            "The five steps in the title bar, Model to Report, show where you are.",
             () => []),
         EmptyState.IsVisible
             ? new("Load a building",
                   "Click Sample building to load a two-storey house to try things on. " +
-                  "Open model… (top left) reads your own model: a Revit export (.json) or plain geometry: OBJ, glTF, FBX, STL, 3DS, DAE or PLY.",
+                  "Your own models open from the project menu at the top left (the button that names the model): a Revit export (.json) or plain geometry: OBJ, glTF, FBX, STL, 3DS, DAE or PLY.",
                   () => [EmptySampleButton], ActionHint: () => "Click Sample building to continue", Done: () => !EmptyState.IsVisible)
-            : new("Load a building",
-                  "Open model… reads a model exported from Revit (.json) or plain geometry: OBJ, glTF, FBX, STL, 3DS, DAE or PLY. " +
-                  "Sample loads a two-storey house so you can try everything straight away.",
-                  () => [OpenModelButton, SampleButton]),
+            : new("The project menu",
+                  "This button names the model and opens the project menu: Open model\u2026 (Ctrl+O), Save model\u2026 (Ctrl+S), the sample house, " +
+                  "and the exports: the PDF report and, in Expert, the videos. Open reads a Revit export (.json) or plain geometry: OBJ, glTF, FBX, STL, 3DS, DAE or PLY.",
+                  () => [ProjectMenuButton]),
         new("Set the wind",
-            "The first box is where the wind comes from, in degrees clockwise from north: 270 is a wind from the west. " +
-            "The second is its speed in metres per second at 10 m height. You can also drag the arrow in the view.",
+            "The wind pill reads where the wind comes from and how fast it blows: W 270\u00b0 is a wind from the west at 4 m/s, measured at 10 m height. " +
+            "Click it for a compass you can turn, a speed slider and the exact numbers. You can also drag the arrow in the view.",
             () => [WindGroup]),
         new("Start the air",
             "Click Run to start the simulation. The view fills with moving particles: that is the air. " +
             "The preview is for looking and trying ideas; the room numbers firm up in a longer pass, described in a moment. Space pauses and resumes.",
-            () => [RunButton], ActionHint: () => TourLiveRunning ? "Starting the air…" : "Click Run to continue",
+            () => [RunButton], ActionHint: () => TourLiveRunning ? "Starting the air\u2026" : "Click Run to continue",
             Done: () => TourFieldReady, Pressable: () => !TourLiveRunning),
         new("Ways to look at the air",
             "Speed colours the moving air by how fast it goes; Still air maps the dead spots in amber instead. " +
@@ -84,24 +85,25 @@ public partial class MainWindow
             () => [SpeedModeToggle, StillModeToggle, SliceHToggle, SliceVToggle],
             Enter: () => TourSet(SliceHToggle, true), Ready: () => TourFieldReady, ClickThrough: true),
         new("The rooms",
-            "WindFlow finds the rooms in your model and lists them here; after a run each shows its fresh-air result. " +
+            "WindFlow finds the rooms in your model and lists them in the Rooms tab; after a run each shows its fresh-air result. " +
             "Click a room for its figures and a verdict in the box below, or Isolate to see that room on its own.",
             () => [RoomsPane], Enter: () => TourTab(TabRooms)),
         new("Openings: windows and doors",
-            "Every window and door in the model. The switch opens or closes one, and the arrow says which way the air goes. " +
-            "+ Add opening, and the box below the list, add, resize or delete them. Door or window is only a label; the air treats both the same.",
-            () => [OpeningsPane], Enter: () => TourTab(TabOpenings)),
+            "The Openings tab lists every window and door. The switch opens or closes one, and the arrow says which way the air goes. " +
+            "+ Add opening on the command bar, and the box below the list, add, resize or delete them. Door or window is only a label; the air treats both the same.",
+            () => [SectionOpeningsTab, OpeningsPane], Enter: () => TourTab(TabOpenings)),
         new("How exact the numbers are",
-            "Once the preview settles, a longer pass starts by itself and its progress shows under these buttons. Standard: a steady wind, up to 10 minutes. " +
+            "Once the preview settles, a longer pass starts by itself; its progress shows at the bottom of the panel. Standard: a steady wind, up to 10 minutes. " +
             "High: a gusty wind, so each room shows a range, within a time budget you pick. " +
             "Ultra: the finest grid your graphics card fits, run for hours and saved as it goes; it asks before it starts.",
-            () => [AccurateControls, PassPanel]),
+            () => [AccurateControls]),
         new("Export the report",
-            "Export PDF writes the report: the room table, a plan of every analysed storey at 1.1 m, and a long section through the building.",
+            "Export PDF writes the report: the room table, a plan of every analysed storey at 1.1 m, and a long section through the building. " +
+            "It is also the last step, Report, in the title bar.",
             () => [ReportButton]),
         new("Basic, Expert and Settings",
-            "Basic keeps to loading, wind, openings, running, rooms and the PDF. Expert adds two panel sections, Devices and Studies, shown next. " +
-            "The ? button opens the “How WindFlow works” PDF, the Technical Reference and this tour again; the gear opens Settings: how much of the graphics card to use.",
+            "Basic keeps to loading, wind, openings, running, rooms and the PDF. Expert adds two panel tabs, Devices and Studies, shown next. " +
+            "The ? button opens the \u201cHow WindFlow works\u201d PDF, the Technical Reference and this tour again; the gear opens Settings: dark or light panels, and how much of the graphics card to use.",
             () => [BasicToggle, HelpButton, GearButton]),
         new("Devices (Expert)",
             "Ceiling and pedestal fans, split and cassette air conditioners, an exhaust fan, a kitchen hood and a ceiling diffuser. " +
@@ -120,6 +122,7 @@ public partial class MainWindow
     void StartTour(int step = 0)
     {
         SettingsPopup.IsOpen = false;
+        if (tour != null && tour.Theme != Application.Current?.ActualThemeVariant) { TourPopup.Child = null; tour = null; }   // rebuilt in the new colours
         if (tour == null)
         {
             tour = new TourOverlay();
@@ -306,21 +309,21 @@ public partial class MainWindow
 }
 
 /// <summary>The coach-mark layer: a dim over the whole window with a rounded cutout, a thin accent ring on the cutout and the
-/// callout card beside it. Built from the app's own tokens (the Settings card's surface and border, the tool buttons, the
-/// link style); nothing animates, nothing glows. A press inside the ring reaches the ringed control when the step allows it.</summary>
+/// callout card beside it. Built from the app's own tokens (the card surface and border, the button classes, the link
+/// style), read when the overlay is built, so it follows Dark / Light; nothing animates, nothing glows. A press inside the ring reaches the ringed control when the step allows it.</summary>
 sealed class TourOverlay : Canvas
 {
     const double Pad = 6, Gap = 12, Edge = 12, CardWidth = 320, WelcomeWidth = 400;
 
-    readonly Avalonia.Controls.Shapes.Path dim = new() { Fill = new SolidColorBrush(Color.Parse("#0A0D12"), 0.74) };
+    readonly Avalonia.Controls.Shapes.Path dim = new() { Fill = Appearance.Brush("TourDim") };
     readonly Border ring = new()
     {
-        BorderBrush = new SolidColorBrush(Color.Parse("#4DB8FF")), BorderThickness = new Thickness(1.5),
+        BorderBrush = Appearance.Brush("Accent"), BorderThickness = new Thickness(1.5),
         CornerRadius = new CornerRadius(8), IsHitTestVisible = false,
     };
     readonly Border card = new()
     {
-        Width = CardWidth, Background = new SolidColorBrush(Color.Parse("#101822")), BorderBrush = new SolidColorBrush(Color.Parse("#223044")),
+        Width = CardWidth, Background = Appearance.Brush("SurfaceRaised"), BorderBrush = Appearance.Brush("Border"),
         BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(18, 14, 18, 16),
     };
     readonly TextBlock title = new() { FontSize = 13.5, FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
@@ -332,6 +335,9 @@ sealed class TourOverlay : Canvas
 
     public event Action? Back, Next, Skip;
 
+    /// <summary>The theme the brushes were read under (StartTour rebuilds the overlay when it changes).</summary>
+    public readonly Avalonia.Styling.ThemeVariant? Theme = Application.Current?.ActualThemeVariant;
+
     /// <summary>Where the card landed, window coordinates (shot sidecar).</summary>
     public Rect CardRect => new(GetLeft(card), GetTop(card), card.Bounds.Width, card.Bounds.Height);
 
@@ -339,10 +345,10 @@ sealed class TourOverlay : Canvas
     {
         Background = Brushes.Transparent;    // every press lands on the overlay; the card's buttons say what happens
         Focusable = true;
-        title.Foreground = body.Foreground = new SolidColorBrush(Color.Parse("#E9EEF6"));
-        counter.Foreground = hint.Foreground = new SolidColorBrush(Color.Parse("#75839A"));
-        back.Classes.Add("tool"); back.Classes.Add("small");
-        next.Classes.Add("tool"); next.Classes.Add("small"); next.Classes.Add("accent");
+        title.Foreground = body.Foreground = Appearance.Brush("Text");
+        counter.Foreground = hint.Foreground = Appearance.Brush("TextMuted");
+        back.Classes.Add("secondary");
+        next.Classes.Add("tool"); next.Classes.Add("accent"); next.MinHeight = 32;
         skip.Classes.Add("link");
         skip.VerticalAlignment = VerticalAlignment.Center;
         back.Click += (_, _) => Back?.Invoke();
@@ -433,7 +439,7 @@ sealed class TourOverlay : Canvas
             var left = new Point(hole.Left - Gap - cs.Width, hole.Center.Y - cs.Height / 2);
             var right = new Point(hole.Right + Gap, hole.Center.Y - cs.Height / 2);
             // top bar: below; the side panel: beside it, so the card does not cover the panel it talks about
-            Point[] order = hole.Bottom < 80 ? [below, left, right, above] : hole.Center.X > w * 0.7 ? [left, below, above, right] : [below, above, right, left];
+            Point[] order = hole.Bottom < 96 ? [below, left, right, above] : hole.Center.X > w * 0.7 ? [left, below, above, right] : [below, above, right, left];
             bool Fits(Point p) => p.X >= Edge && p.Y >= Edge && p.X + cs.Width <= w - Edge && p.Y + cs.Height <= h - Edge;
             pos = order.FirstOrDefault(Fits, order[0]);
         }

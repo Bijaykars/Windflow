@@ -59,12 +59,12 @@ public partial class MainWindow
         title.Classes.Add("section");
         var cancel = new Button { Content = "Cancel", IsDefault = true, IsCancel = true };
         var open = new Button { Content = "Open anyway" };
-        cancel.Classes.Add("tool"); open.Classes.Add("tool");
+        cancel.Classes.Add("secondary"); open.Classes.Add("tool"); open.Classes.Add("accent");
         var dialog = new Window
         {
             Title = "Large model", Width = 440, SizeToContent = SizeToContent.Height, CanResize = false,
             WindowStartupLocation = WindowStartupLocation.CenterOwner, FontFamily = FontFamily,
-            Background = this.FindResource("Panel") as Avalonia.Media.IBrush, RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Dark,
+            Background = this.FindResource("Panel") as Avalonia.Media.IBrush,
             Content = new StackPanel
             {
                 Margin = new Avalonia.Thickness(20), Spacing = 12,

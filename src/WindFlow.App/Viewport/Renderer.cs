@@ -155,32 +155,10 @@ public sealed class Renderer
     int captureSlot;
     byte[] capturedPixels = [], capturedPixels2 = [];
 
-    // Design tokens, linear-light (the pixel shader gamma-encodes on the way out).
-    static readonly Color4 Clear = new(0.039f, 0.051f, 0.071f, 1f);           // #0A0D12, already encoded
-    static readonly Vector4 WallColor = Linear(0x99A5B4), GroundColor = Linear(0x333B46);
-    static readonly Vector4 GhostColor = Linear(0x9FC4DE, 0.5f);
-    static readonly Vector4 EdgeClay = Linear(0x0C1219, 0.45f), EdgeGhost = Linear(0xBFD9EC, 0.5f);
-    static readonly Vector4 OpenFill = Linear(0x4DB8FF, 0.32f), OpenLine = Linear(0x8FD6FF, 0.95f);
-    static readonly Vector4 ShutFill = Linear(0xC0453F, 0.24f), ShutLine = Linear(0xE06A62, 0.85f);
-    static readonly Vector4 GridMinor = Linear(0x243448, 0.6f), GridMajor = Linear(0x33506E, 0.8f);
-    static readonly Vector4 HoverFill = Linear(0x9BDCFF, 0.42f), HoverLine = Linear(0xEAF7FF, 1f);
-    static readonly Vector4 WindColor = Linear(0x4DB8FF, 0.75f);
-    static readonly Vector4 XrayColor = Linear(0x8FB4D0, 0.14f), EdgeXray = Linear(0xDCEBF7, 0.8f);
-    static readonly Vector4 BoxColor = Linear(0x8CFFE0, 1f), BandColor = Linear(0x8CFFE0, 0.22f);
-    static readonly Vector4 HandleIdle = Linear(0x9FE8D6, 0.85f), HandleHover = Linear(0xFFFFFF, 0.95f);
-    static readonly Vector4 HandleActive = Linear(0xFFD166, 1f);
-    static readonly Vector4 RoomLine = Linear(0x2C4055, 0.5f), RoomHover = Linear(0x7FD4FF, 0.85f);
-    static readonly Vector4 SpaceLine = Linear(0x7FD4FF, 0.55f), DeletedLine = Linear(0xFFB454, 0.95f);
-    // Selection: one warm accent that nothing else in the scene uses (viridis particles, blue ghost walls and
-    // openings, red shut openings, amber still air), so the picked room or opening reads at a glance.
-    static readonly Vector4 SelectFill = Linear(0xE08CFF, 0.30f), SelectLine = Linear(0xF2C6FF, 0.95f),
-        SelectQuad = Linear(0xE08CFF, 0.55f);
-    static readonly Vector4 RoomSelected = Linear(0xFFFFFF, 0.95f), ProbeColor = Linear(0xFFD166, 0.95f);
-    static readonly Vector4 DeviceColor = Linear(0x7FD8F0, 0.85f), DeviceHover = Linear(0xBFEEFF, 0.95f),
-        DeviceSelectedColor = Linear(0xFFFFFF, 0.98f), DeviceGhostColor = Linear(0x5AD19A, 0.98f),
-        DeviceHalo = Linear(0x070B11, 0.82f),
-        // A switched-off device: the same line art at ~30 % so it reads as "off", and no dark halo behind it.
-        DeviceOffColor = Linear(0x7FD8F0, 0.28f);
+    // Design tokens live in ViewportPalette, one set per Appearance. The UI thread flips LightTheme; the render
+    // thread picks the palette up at the top of the next frame, so a frame never mixes the two.
+    public volatile bool LightTheme;
+    ViewportPalette pal = ViewportPalette.Dark;
 
     /// <summary>Device the pointer is over, and the one the panel has selected; -1 for none.</summary>
     public int HoverDevice = -1, SelectedDevice = -1;
@@ -204,8 +182,6 @@ public sealed class Renderer
         return best;
     }
     static readonly Vector4 SunDirection = new(0.42f, 0.62f, -0.66f, 0f);     // direction the light travels
-    // Outdoor air is context, not the subject: a low alpha ceiling keeps the eye inside the rooms.
-    const float ParticleBrightness = 1.15f, ParticleOutdoorDim = 0.07f, ParticleAlpha = 0.52f;
 
     [StructLayout(LayoutKind.Sequential)]
     struct SceneConstants
@@ -814,7 +790,7 @@ public sealed class Renderer
         var colorDesc = ResourceDescription.Texture2D(BackFormat, (uint)width, (uint)height, 1, 1, SampleCount, 0,
             ResourceFlags.AllowRenderTarget, TextureLayout.Unknown, 0);
         msaaColor = device!.CreateCommittedResource(HeapProperties.DefaultHeapProperties, HeapFlags.None, colorDesc,
-            ResourceStates.RenderTarget, new ClearValue(BackFormat, Clear));
+            ResourceStates.RenderTarget, new ClearValue(BackFormat, pal.Clear));
         device.CreateRenderTargetView(msaaColor, null, MsaaRtv);
 
         var depthDesc = ResourceDescription.Texture2D(DepthFormat, (uint)width, (uint)height, 1, 1, SampleCount, 0,
@@ -891,7 +867,7 @@ public sealed class Renderer
         var allocator = allocators[frameIndex]!;
         allocator.Reset();
         cmd!.Reset(allocator, null);
-
+        pal = ViewportPalette.For(LightTheme);
         if (shotRequest && !capture) { capture = true; captureSlot = 2; shotRequest = false; }
         if (timePending[frameIndex]) ReadTimes(frameIndex);
         int tq = frameIndex * TimeSlots;
@@ -903,10 +879,13 @@ public sealed class Renderer
         cmd.RSSetViewport(0f, 0f, width, height, 0f, 1f);
         cmd.RSSetScissorRect(width, height);
         cmd.OMSetRenderTargets(MsaaRtv, Dsv);
-        cmd.ClearRenderTargetView(MsaaRtv, Clear);
+        cmd.ClearRenderTargetView(MsaaRtv, pal.Clear);
         cmd.ClearDepthStencilView(Dsv, ClearFlags.Depth, 1f, 0);
         cmd.SetGraphicsRootSignature(rootSignature);
 
+        // Background vignette: Albedo at the centre, Light at the rim (both already sRGB-encoded).
+        var bg = new SceneConstants { Albedo = pal.BackgroundInner, Light = pal.BackgroundOuter };
+        unsafe { cmd.SetGraphicsRoot32BitConstants(0, SceneConstants.Dwords, (IntPtr)(&bg), 0); }
         cmd.SetPipelineState(psoBackground!);
         cmd.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
         cmd.DrawInstanced(3, 1, 0, 0);
@@ -939,7 +918,7 @@ public sealed class Renderer
             var constants = new SceneConstants
             {
                 ViewProj = viewProj,
-                Light = SunDirection,
+                Light = SunDirection with { W = pal.Theme },        // w: 0 dark, 1 light (ambient, rim, fresnel)
                 ClipMin = new Vector4(cMin, clip ? 1f : 0f),
                 ClipMax = new Vector4(cMax, 0f),
                 BoxMin = new Vector4(bMin, 0f),
@@ -950,32 +929,32 @@ public sealed class Renderer
             // Trails are not cut by the section box (by design), only by an isolated room.
             Particles.TrailClipMin = new Vector4(cMin, iso != null ? 1f : 0f);
             Particles.TrailClipMax = new Vector4(cMax, 0f);
-            Draw(ref constants, eye, s.GridMinor, psoLine!, PrimitiveTopology.LineList, GridMinor, s.GridFade);
-            Draw(ref constants, eye, s.GridMajor, psoLine!, PrimitiveTopology.LineList, GridMajor, s.GridFade);
-            Draw(ref constants, eye, s.Ground, psoClay!, PrimitiveTopology.TriangleList, GroundColor, 0);
+            Draw(ref constants, eye, s.GridMinor, psoLine!, PrimitiveTopology.LineList, pal.GridMinor, s.GridFade);
+            Draw(ref constants, eye, s.GridMajor, psoLine!, PrimitiveTopology.LineList, pal.GridMajor, s.GridFade);
+            Draw(ref constants, eye, s.Ground, psoClay!, PrimitiveTopology.TriangleList, pal.GroundColor, 0);
             // Clay, Ghost, X-ray: same geometry, three readings of it.
             var mode = Walls;
             if (mode != WallMode.Xray)
                 Draw(ref constants, eye, s.Walls, mode == WallMode.Ghost ? psoGhost! : psoClay!,
-                    PrimitiveTopology.TriangleList, mode == WallMode.Ghost ? GhostColor : WallColor, 0);
+                    PrimitiveTopology.TriangleList, mode == WallMode.Ghost ? pal.GhostColor : pal.WallColor, 0);
             else
-                Draw(ref constants, eye, s.Walls, psoGhost!, PrimitiveTopology.TriangleList, XrayColor, 0);
+                Draw(ref constants, eye, s.Walls, psoGhost!, PrimitiveTopology.TriangleList, pal.XrayColor, 0);
             Draw(ref constants, eye, s.Edges, psoLine!, PrimitiveTopology.LineList,
-                mode == WallMode.Clay ? EdgeClay : mode == WallMode.Ghost ? EdgeGhost : EdgeXray, 0);
-            Draw(ref constants, eye, s.OpenQuads, psoFlat!, PrimitiveTopology.TriangleList, OpenFill, 0);
-            Draw(ref constants, eye, s.ClosedQuads, psoFlat!, PrimitiveTopology.TriangleList, ShutFill, 0);
-            Draw(ref constants, eye, s.OpenLines, psoLine!, PrimitiveTopology.LineList, OpenLine, 0);
-            Draw(ref constants, eye, s.ClosedLines, psoLine!, PrimitiveTopology.LineList, ShutLine, 0);
-            Draw(ref constants, eye, s.WindArrow, psoLine!, PrimitiveTopology.LineList, WindColor, 0);
+                mode == WallMode.Clay ? pal.EdgeClay : mode == WallMode.Ghost ? pal.EdgeGhost : pal.EdgeXray, 0);
+            Draw(ref constants, eye, s.OpenQuads, psoFlat!, PrimitiveTopology.TriangleList, pal.OpenFill, 0);
+            Draw(ref constants, eye, s.ClosedQuads, psoFlat!, PrimitiveTopology.TriangleList, pal.ShutFill, 0);
+            Draw(ref constants, eye, s.OpenLines, psoLine!, PrimitiveTopology.LineList, pal.OpenLine, 0);
+            Draw(ref constants, eye, s.ClosedLines, psoLine!, PrimitiveTopology.LineList, pal.ShutLine, 0);
+            Draw(ref constants, eye, s.WindArrow, psoLine!, PrimitiveTopology.LineList, pal.WindColor, 0);
 
-            Draw(ref constants, eye, s.RoomOutlines, psoLine!, PrimitiveTopology.LineList, RoomLine, 0);
-            Draw(ref constants, eye, s.SpaceOutlines, psoLine!, PrimitiveTopology.LineList, SpaceLine, 0);
-            Draw(ref constants, eye, s.DeletedLines, psoLine!, PrimitiveTopology.LineList, DeletedLine, 0);
+            Draw(ref constants, eye, s.RoomOutlines, psoLine!, PrimitiveTopology.LineList, pal.RoomLine, 0);
+            Draw(ref constants, eye, s.SpaceOutlines, psoLine!, PrimitiveTopology.LineList, pal.SpaceLine, 0);
+            Draw(ref constants, eye, s.DeletedLines, psoLine!, PrimitiveTopology.LineList, pal.DeletedLine, 0);
             int selectedSpace = SelectedSpace, hoverSpace = HoverSpace;
             foreach (var sp in s.Spaces)
             {
-                if (sp.Index == selectedSpace && iso == null) Draw(ref constants, eye, sp.Block, psoGhost!, PrimitiveTopology.TriangleList, SelectFill, 0);
-                else if (sp.Index == hoverSpace) Draw(ref constants, eye, sp.BlockEdges, psoLine!, PrimitiveTopology.LineList, RoomHover, 0);
+                if (sp.Index == selectedSpace && iso == null) Draw(ref constants, eye, sp.Block, psoGhost!, PrimitiveTopology.TriangleList, pal.SelectFill, 0);
+                else if (sp.Index == hoverSpace) Draw(ref constants, eye, sp.BlockEdges, psoLine!, PrimitiveTopology.LineList, pal.RoomHover, 0);
             }
             int selectedRoom = SelectedRoom;
             var extraRooms = ExtraRooms;
@@ -983,31 +962,31 @@ public sealed class Renderer
             foreach (var room in s.Rooms)
             {
                 if (extraRooms.Contains(room.Index) && iso == null)
-                    Draw(ref constants, eye, room.Block, psoGhost!, PrimitiveTopology.TriangleList, SelectFill, 0);
+                    Draw(ref constants, eye, room.Block, psoGhost!, PrimitiveTopology.TriangleList, pal.SelectFill, 0);
                 if (room.Index == selectedRoom) selected = room;
                 else if (room.Index == HoverRoom)
-                    Draw(ref constants, eye, room.Outline, psoLine!, PrimitiveTopology.LineList, RoomHover, 0);
+                    Draw(ref constants, eye, room.Outline, psoLine!, PrimitiveTopology.LineList, pal.RoomHover, 0);
             }
             // The picked room as a volume: ghost-shaded (fresnel, so the silhouette is brighter than the faces),
             // depth-tested against clay walls, drawn before the particles so the trails stay on top of it.
             // Isolated, the room is the whole picture: no tinted volume over its air, only the edges after the trails.
             if (selected is { } sel && iso == null)
-                Draw(ref constants, eye, sel.Block, psoGhost!, PrimitiveTopology.TriangleList, SelectFill, 0);
+                Draw(ref constants, eye, sel.Block, psoGhost!, PrimitiveTopology.TriangleList, pal.SelectFill, 0);
             int selectedOpening = SelectedOpening;
             if ((uint)selectedOpening < (uint)s.Picks.Length)
-                Draw(ref constants, eye, s.Picks[selectedOpening].Quad, psoFlat!, PrimitiveTopology.TriangleList, SelectQuad, 0);
-            Draw(ref constants, eye, s.Probes, psoLine!, PrimitiveTopology.LineList, ProbeColor, 0);
+                Draw(ref constants, eye, s.Picks[selectedOpening].Quad, psoFlat!, PrimitiveTopology.TriangleList, pal.SelectQuad, 0);
+            Draw(ref constants, eye, s.Probes, psoLine!, PrimitiveTopology.LineList, pal.ProbeColor, 0);
 
             int hover = HoverOpening;
             if ((uint)hover < (uint)s.Picks.Length)
             {
-                Draw(ref constants, eye, s.Picks[hover].Quad, psoFlat!, PrimitiveTopology.TriangleList, HoverFill, 0);
-                Draw(ref constants, eye, s.Picks[hover].Lines, psoLine!, PrimitiveTopology.LineList, HoverLine, 0);
+                Draw(ref constants, eye, s.Picks[hover].Quad, psoFlat!, PrimitiveTopology.TriangleList, pal.HoverFill, 0);
+                Draw(ref constants, eye, s.Picks[hover].Lines, psoLine!, PrimitiveTopology.LineList, pal.HoverLine, 0);
             }
             if (ShowBox && bMax.X > bMin.X)
             {
                 constants.Eye = new Vector4(eye, 0);
-                constants.Albedo = BoxColor;
+                constants.Albedo = pal.BoxColor;
                 constants.ClipMin = new Vector4(bMin, 0f);      // the outline is not clipped by its own box
                 unsafe { cmd.SetGraphicsRoot32BitConstants(0, SceneConstants.Dwords, (IntPtr)(&constants), 0); }
                 cmd.SetPipelineState(psoBoxEdges!);
@@ -1018,7 +997,7 @@ public sealed class Renderer
                     // Same generated edges, on the band's inner box, in a faint tint of the box colour.
                     constants.BoxMin = new Vector4(band.Min, 0f);
                     constants.BoxMax = new Vector4(band.Max, 0f);
-                    constants.Albedo = BandColor;
+                    constants.Albedo = pal.BandColor;
                     unsafe { cmd.SetGraphicsRoot32BitConstants(0, SceneConstants.Dwords, (IntPtr)(&constants), 0); }
                     cmd.DrawInstanced(24, 1, 0, 0);
                     constants.BoxMin = new Vector4(bMin, 0f);
@@ -1030,18 +1009,18 @@ public sealed class Renderer
             Particles.DrawCloud(cmd, viewProj, new Vector3(view.M11, view.M21, view.M31),
                 new Vector3(view.M12, view.M22, view.M32), fenceValues[frameIndex]);
             cmd.EndQuery(timeHeap!, QueryType.Timestamp, (uint)(tq + 2));
-            Particles.Draw(cmd, viewProj, ParticleBrightness, ParticleOutdoorDim, ParticleAlpha, width);
+            Particles.Draw(cmd, viewProj, pal.ParticleBrightness, pal.ParticleOutdoorDim, pal.ParticleAlpha, pal.Theme, width);
             cmd.EndQuery(timeHeap!, QueryType.Timestamp, (uint)(tq + 3));
             trailsTimed = true;
             // Selection edges after the particles, so the room's outline is never lost in a dense cloud.
             cmd.SetGraphicsRootSignature(rootSignature);
             cmd.IASetVertexBuffers(0, vbv);
             if (selected is { } selEdges)
-                Draw(ref constants, eye, selEdges.BlockEdges, psoLine!, PrimitiveTopology.LineList, SelectLine, 0);
+                Draw(ref constants, eye, selEdges.BlockEdges, psoLine!, PrimitiveTopology.LineList, pal.SelectLine, 0);
             foreach (var sp in s.Spaces)
-                if (sp.Index == selectedSpace) Draw(ref constants, eye, sp.BlockEdges, psoLine!, PrimitiveTopology.LineList, SelectLine, 0);
+                if (sp.Index == selectedSpace) Draw(ref constants, eye, sp.BlockEdges, psoLine!, PrimitiveTopology.LineList, pal.SelectLine, 0);
             if ((uint)selectedOpening < (uint)s.Picks.Length)
-                Draw(ref constants, eye, s.Picks[selectedOpening].Lines, psoLine!, PrimitiveTopology.LineList, SelectLine, 0);
+                Draw(ref constants, eye, s.Picks[selectedOpening].Lines, psoLine!, PrimitiveTopology.LineList, pal.SelectLine, 0);
             DrawDeviceGlyphs(cmd, ref constants, eye, s);
             DrawHandles(cmd, ref constants, viewProj);
         }
@@ -1138,17 +1117,17 @@ public sealed class Renderer
                 if (d.Index == SelectedDevice || d.Index == HoverDevice) radius *= 1.15f;
                 constants.Eye = new Vector4(d.Center, 0);
                 constants.Light = new Vector4(2f * radius / Math.Max(width, 1), 2f * radius / Math.Max(height, 1), 0, 0);
-                constants.Albedo = DeviceHalo;
+                constants.Albedo = pal.DeviceHalo;
                 fixed (SceneConstants* p = &constants) cmd.SetGraphicsRoot32BitConstants(0, SceneConstants.Dwords, (IntPtr)p, 0);
                 cmd.DrawInstanced(6, 1, 0, 0);
             }
             constants.Light = SunDirection;
         }
 
-        Draw(ref constants, eye, s.DeviceOff, psoLine!, PrimitiveTopology.LineList, DeviceOffColor, 0);
-        Draw(ref constants, eye, s.DeviceGlyphs, psoLine!, PrimitiveTopology.LineList, DeviceColor, 0);
-        Draw(ref constants, eye, s.DeviceSelected, psoLine!, PrimitiveTopology.LineList, DeviceSelectedColor, 0);
-        Draw(ref constants, eye, s.DeviceGhost, psoLine!, PrimitiveTopology.LineList, DeviceGhostColor, 0);
+        Draw(ref constants, eye, s.DeviceOff, psoLine!, PrimitiveTopology.LineList, pal.DeviceOffColor, 0);
+        Draw(ref constants, eye, s.DeviceGlyphs, psoLine!, PrimitiveTopology.LineList, pal.DeviceColor, 0);
+        Draw(ref constants, eye, s.DeviceSelected, psoLine!, PrimitiveTopology.LineList, pal.DeviceSelectedColor, 0);
+        Draw(ref constants, eye, s.DeviceGhost, psoLine!, PrimitiveTopology.LineList, pal.DeviceGhostColor, 0);
     }
 
     /// <summary>Half-extent of a world-space radius about a point, in pixels. Sampled on all three axes
@@ -1195,7 +1174,7 @@ public sealed class Renderer
                 constants.Light = new Vector4(toNdcX, toNdcY, (float)(int)shape, stroke + grow);
                 constants.ClipMin = new Vector4(lay.U.X, lay.U.Y, grow, 0f);
                 constants.ClipMax = new Vector4(lay.V.X, lay.V.Y, extra, knob ? 1f : 0f);
-                constants.Albedo = halo ? DeviceHalo : active ? HandleActive : hover ? HandleHover : HandleIdle;
+                constants.Albedo = halo ? pal.DeviceHalo : active ? pal.HandleActive : hover ? pal.HandleHover : pal.HandleIdle;
                 fixed (SceneConstants* p = &constants)
                     cmd.SetGraphicsRoot32BitConstants(0, SceneConstants.Dwords, (IntPtr)p, 0);
                 cmd.DrawInstanced(count, 1, 0, 0);
@@ -1306,11 +1285,6 @@ public sealed class Renderer
 #endif
     }
 
-    static Vector4 Linear(uint rgb, float alpha = 1f)
-    {
-        static float S(float c) => c <= 0.04045f ? c / 12.92f : MathF.Pow((c + 0.055f) / 1.055f, 2.4f);
-        return new Vector4(S(((rgb >> 16) & 0xFF) / 255f), S(((rgb >> 8) & 0xFF) / 255f), S((rgb & 0xFF) / 255f), alpha);
-    }
 }
 
 /// <summary>What a --bench run measured, handed back to the UI thread to be written out.</summary>

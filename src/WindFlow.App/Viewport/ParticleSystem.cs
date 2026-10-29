@@ -139,7 +139,7 @@ public sealed class ParticleSystem
         public uint Head, TrailLen; public float SpeedMax, Brightness;
         public float OutdoorDim, BaseAlpha, StillAlpha, StillCut;
         public Vector3 HouseMin; public float RingLen;
-        public Vector3 HouseMax; public float Pad3;
+        public Vector3 HouseMax; public float Theme;      // 0 dark, 1 light
         public Vector4 IsoMin, IsoMax;         // room isolate box, w > 0.5 enables
         public const int Dwords = 40;
     }
@@ -518,7 +518,8 @@ public sealed class ParticleSystem
         }
 
         lastUseSignal = pendingSignal;      // this frame reads the current buffers and descriptors
-        accumulator += Math.Clamp(realDt, 0, 0.25f);
+        if (Frozen) accumulator = 0;        // live run paused: particles stay drawn where they are, no advect/age/respawn
+        else accumulator += Math.Clamp(realDt, 0, 0.25f);
         if (accumulator > SimStep * 6) accumulator = SimStep * 2;    // came back from a stall, do not catch up
         int steps = 0;
         while (accumulator >= SimStep && steps < 2)
@@ -563,7 +564,7 @@ public sealed class ParticleSystem
     }
 
     public void Draw(ID3D12GraphicsCommandList cmd, Matrix4x4 viewProj, float brightness, float outdoorDim,
-        float baseAlpha, int viewportWidth)
+        float baseAlpha, float theme, int viewportWidth)
     {
         if (!Ready || !Enabled || countWait) return;
         bool still = View == ParticleView.Still;
@@ -589,6 +590,7 @@ public sealed class ParticleSystem
             HouseMin = houseMin,
             RingLen = TrailLength,
             HouseMax = houseMax,
+            Theme = theme,
             IsoMin = TrailClipMin,
             IsoMax = TrailClipMax,
         };
@@ -610,6 +612,8 @@ public sealed class ParticleSystem
     /// signal of the last frame that used it. Disposing it inline is a use-after-free two frames deep.</summary>
     readonly List<(ID3D12Resource Resource, ulong Fence)> retired = [];
     ulong lastUseSignal;
+    /// <summary>Set by the window while the live run is Paused: the sim step is skipped, the particles are still drawn.</summary>
+    public volatile bool Frozen;
 
     void Retire(ID3D12Resource? resource, ulong fence)
     {

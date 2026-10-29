@@ -8,6 +8,7 @@ namespace WindFlow.App;
 public sealed class Settings
 {
     public string Mode { get; set; } = "Basic";      // Basic is the default for a fresh install
+    public string Theme { get; set; } = "Dark";      // Dark (default) or Light chrome around the dark viewport (Theme.cs)
     public double WindowWidth { get; set; } = 1680;
     public double WindowHeight { get; set; } = 940;
     public string LastModel { get; set; } = "";

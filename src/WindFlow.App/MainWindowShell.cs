@@ -41,8 +41,8 @@ public partial class MainWindow
         ExpertToggle.IsChecked = expert;
         advancedMode = expert;
         ui ??= UiTable.Resolve(this);
-        foreach (var (rule, control) in ui) control.IsVisible = UiTable.Visible(rule, expert);
-        SectionPicker.ItemsSource = expert ? UiTable.Sections : UiTable.BasicSections;
+        // only the Expert-only rows: the others are shown by their own state (the box buttons, thermal-only rows), not by the mode
+        foreach (var (rule, control) in ui) if (rule.ExpertOnly) control.IsVisible = UiTable.Visible(rule, expert);
         ShowTab(expert || panelTab < UiTable.BasicSections.Length ? panelTab : TabRooms);
         statsVersion = -1;                  // repaint the rows: Expert adds the air-age column and the sweep ticks
         if (!expert)
@@ -66,15 +66,8 @@ public partial class MainWindow
         RefreshPanel();
     }
 
-    bool syncingPicker;
-
     // Panel sections, in the order of UiTable.Sections (the picker's items). Rooms is the default on open.
     const int TabRooms = 0, TabOpenings = 1, TabView = 2, TabDevices = 3, TabStudies = 4;
-
-    void OnSection(object? sender, SelectionChangedEventArgs e)
-    {
-        if (!syncingPicker && SectionPicker.SelectedIndex >= 0) SelectTab(SectionPicker.SelectedIndex);
-    }
 
     /// <summary>The section picker: Rooms, Openings, View, then Devices and Studies in Expert.</summary>
     void SelectTab(int tab)
@@ -85,9 +78,7 @@ public partial class MainWindow
 
     void ShowTab(int tab)
     {
-        syncingPicker = true;
-        SectionPicker.SelectedIndex = tab;
-        syncingPicker = false;
+        ShowSectionTab(tab);
         // View is the old Results pane (still air, slice, environment) with Expert's display and probe controls under it.
         ResultsPane.IsVisible = tab == TabView;
         ViewPane.IsVisible = tab == TabView;
@@ -473,7 +464,8 @@ public partial class MainWindow
         }
         LockToggle.IsChecked = locked;
         LockGlyph.Text = locked ? "" : "";
-        LockText.Text = locked ? "Result locked · viewing only" : "Lock";
+        LockText.Text = locked ? "Locked · viewing only" : "Lock";
+        LockText.IsVisible = locked;                         // the icon alone until it is a state worth reading
         ToolTip.SetTip(LockToggle, locked
             ? "Viewing only: the solver is stopped and the GPU only draws. Camera, Speed/Still air, slice, room " +
               "highlight and Export PDF still work. Click to unlock and carry on solving from here."
@@ -537,13 +529,12 @@ public partial class MainWindow
         Viewport3D.Renderer.InputEnabled = false;   // keep stray keys and wheels out of a headless run
         if (mode is "openings-prerun" or "picker-basic" or "picker-expert")
         {
-            // Before any Run: the lists come from the model alone. picker-*: the section drop-down open.
+            // Before any Run: the lists come from the model alone. picker-*: the panel's tabs (Basic three, Expert five).
             SelectTab(mode == "openings-prerun" ? TabOpenings : TabRooms);
-            if (mode != "openings-prerun") SectionPicker.IsDropDownOpen = true;
             await Task.Delay(1200);
             shotNote = $"mode {mode} · before any run · rooms {(RoomList.ItemsSource as IEnumerable<object>)?.Count()} rows · openings " +
                        string.Join(" | ", (OpeningListView.ItemsSource as IEnumerable<OpeningRow>)?.Select(o => $"{o.Name} \"{o.Flow}\"") ?? []) +
-                       $" · picker {string.Join(", ", (SectionPicker.ItemsSource as IEnumerable<string>) ?? [])} open {SectionPicker.IsDropDownOpen}";
+                       $" · tabs {string.Join(", ", new[] { SectionRoomsTab, SectionOpeningsTab, SectionViewTab, SectionDevicesTab, SectionStudiesTab }.Where(t => t.IsEffectivelyVisible).Select(t => t.Content))}";
             await SaveShell(path);
             Close();
             return;
@@ -606,6 +597,12 @@ public partial class MainWindow
             }
             case "settings":
                 SettingsPopup.IsOpen = true;
+                break;
+            case "menu":
+                ProjectMenuButton.Flyout?.ShowAt(ProjectMenuButton);
+                break;
+            case "wind":
+                OnWindPill(null, null!);
                 break;
             case "openings-add":
             case "openings-add-basic":
@@ -751,6 +748,45 @@ public partial class MainWindow
                 lines.Add($"placing   {preset.Label} · ghost {(placeGhost != null ? $"at {placeGhost.Center}" : "NONE")} · hint \"{DevicesHint.Text}\"");
                 break;
             }
+            case "pause":
+            {
+                for (int i = 0; i < 120 && live!.Publishes == 0; i++) await Task.Delay(500);
+                for (int i = 0; i < 20; i++) await Task.Delay(500);     // let the particles fill in
+                string stem = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, Path.GetFileNameWithoutExtension(path));
+                async Task<byte[]?> Grab(string tag)
+                {
+                    shotNote = $"mode pause · {tag} · solver {live?.State} frozen {Viewport3D.Renderer.Particles.Frozen}";
+                    var rr = Viewport3D.Renderer;
+                    rr.RequestShot();
+                    byte[]? px = null;
+                    for (int i = 0; i < 150 && px == null; i++) { await Task.Delay(20); px = rr.TakeShot(out _); }
+                    await SaveShell(stem + "-" + tag + ".png");
+                    return px;
+                }
+                live!.SetPaused(true);
+                for (int i = 0; i < 100 && live.State != LiveSolver.Mode.Paused; i++) await Task.Delay(50);
+                await Task.Delay(1500);                                  // the status tick sets the freeze, the last advected frame lands
+                var a = await Grab("paused-1");
+                await Task.Delay(1000);
+                var b = await Grab("paused-2");
+                live.SetPaused(false);
+                await Task.Delay(1500);
+                // Viewport readback only (no UI text); a pixel counts as changed when a channel moves by more than 16.
+                static int Changed(byte[]? x, byte[]? y)
+                {
+                    if (x == null || y == null) return -1;
+                    int n = 0;
+                    for (int i = 0; i + 3 < Math.Min(x.Length, y.Length); i += 4)
+                        if (Math.Abs(x[i] - y[i]) > 16 || Math.Abs(x[i + 1] - y[i + 1]) > 16 || Math.Abs(x[i + 2] - y[i + 2]) > 16) n++;
+                    return n;
+                }
+                var c = await Grab("resumed");
+                lines.Add($"pause     frozen {Viewport3D.Renderer.Particles.Frozen} · frames 1 vs 2 (1 s apart, paused): {(Changed(a, b) == 0 ? "identical while paused" : "DIFFERENT while paused")} ({Changed(a, b)} px changed)");
+                lines.Add($"resume    paused frame vs after resume: {(Changed(b, c) == 0 ? "identical after resume (FAIL)" : "different")} ({Changed(b, c)} px changed) · solver {live.State} · publishes {live.Publishes}");
+                File.AppendAllLines(Path.ChangeExtension(stem + "-resumed.png", ".txt"), lines);
+                Close();
+                return;
+            }
             case "locked":
             {
                 lines.Add(Sample("unlocked"));
@@ -868,9 +904,9 @@ public partial class MainWindow
     {
         if (SettingsPopup.IsOpen) PastePopup(rgba, w, h, scale, SettingsCard);
         if (TourPopup.IsOpen && TourPopup.Child is { } tourLayer) PastePopup(rgba, w, h, scale, tourLayer);   // the guided tour (Tour.cs)
-        // the section picker's drop-down (picker-* shots) is a popup too
-        if (SectionPicker.IsDropDownOpen && Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(SectionPicker).OfType<Avalonia.Controls.Primitives.Popup>().FirstOrDefault()?.Child is { } list)
-            PastePopup(rgba, w, h, scale, list);
+        if (WindPopup.IsOpen) PastePopup(rgba, w, h, scale, WindCard);                                    // the wind pop-over
+        if (ProjectMenuButton.Flyout is { IsOpen: true }) PastePopup(rgba, w, h, scale, ProjectMenuCard);   // the project menu
+        if (HelpButton.Flyout is { IsOpen: true }) PastePopup(rgba, w, h, scale, HelpMenuCard);
     }
 
     void PastePopup(byte[] rgba, int w, int h, double scale, Control content)

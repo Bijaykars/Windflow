@@ -17,7 +17,8 @@ public static class UiTable
     [
         // Expert only.
         new("ExpertViewTools", ExpertOnly: true, ChangesFlow: false),    // Box, Clip, Reset box
-        new("ExportMenuButton", ExpertOnly: true, ChangesFlow: false),   // video export
+        new("ExportVideoGroup", ExpertOnly: true, ChangesFlow: false),   // project menu: video exports
+        new("ExpertTabs", ExpertOnly: true, ChangesFlow: false),         // panel tabs Devices, Studies
         new("PanelToggle", ExpertOnly: true, ChangesFlow: false),
         new("ExpertPanes", ExpertOnly: true, ChangesFlow: false),        // Devices, View, Studies
         new("TrustDetail", ExpertOnly: true, ChangesFlow: false),        // in/out/residual numbers
@@ -57,7 +58,7 @@ public static class UiTable
         new("MergeInspector", ExpertOnly: false, ChangesFlow: true),        // inspector: merge the Ctrl+click selection (RoomEdit.CannotMerge enables the button)
     ];
 
-    /// <summary>The section picker's items: Basic gets the first three, Expert all five (SectionPicker, MainWindow). Rooms is the default on open.</summary>
+    /// <summary>The panel's tabs: Basic gets the first three, Expert all five (SectionTabs, MainWindow). Rooms is the default on open.</summary>
     public static readonly string[] Sections = ["Rooms", "Openings", "View", "Devices", "Studies"];
     public static readonly string[] BasicSections = Sections[..3];
 
@@ -69,16 +70,18 @@ public static class UiTable
     /// adding a control to Basic is a deliberate act (PLAN_V2 4.3: nothing else is visible).</summary>
     public static readonly string[] BasicControls =
     [
-        "OpenModelButton", "SaveModelButton", "SampleButton", "WindDirBox", "WindSpeedBox", "RunButton", "LockToggle",
+        "ProjectMenuButton", "OpenModelButton", "SaveModelButton", "SampleButton", "Export PDF report",
+        "WfModel", "WfWind", "WfSimulate", "WfResults", "WfReport",
+        "WindPill", "WindDirBox", "WindSpeedBox", "WindSpeedSlider", "RunButton", "LockToggle", "Frame", "CaptionMinimize", "CaptionMaximize", "CaptionClose",
         "SpeedModeToggle", "StillModeToggle", "ReportButton", "BasicToggle", "ExpertToggle", "HelpButton", "HelpMethodItem", "HelpTechRefItem", "HelpTourItem", "HelpContactItem", "GearButton",
         // panel
         "StillSlider", "StillParticlesToggle", "AchIntentToggle", "ThermalToggle", "IndoorBox", "OutdoorBox", "HoldIndoorToggle",
-        "NotesToggle", "SectionPicker", "IsolateChip", "SliceHToggle", "SliceVToggle", "SliceZSlider", "SliceOtherSlider",
+        "NotesToggle", "SectionRoomsTab", "SectionOpeningsTab", "SectionViewTab", "IsolateChip", "SliceHToggle", "SliceVToggle", "SliceZSlider", "SliceOtherSlider",
         "AccurateStandardToggle", "AccurateHighToggle", "AccurateUltraToggle", "UCap6Toggle", "UCap12Toggle", "UCap20Toggle", "UCap24Toggle", "Cap5Toggle", "Cap10Toggle", "Cap20Toggle", "Cap30Toggle", "FocusBoxToggle", "OpeningAddButton", "RoomAddButton", "StatusUndoButton",
         // inspector (the selected room or opening)
         "InspIsolateButton", "InspFrameButton", "InspOpeningFrameButton", "InspDeleteButton", "InspWidth", "InspHeight", "InspSill", "InspType", "RoomInspDeleteButton", "MergeButton",
         // settings popover
-        "GpuSlider", "ParticleBox", "ParticleAutoButton", "LogFolderButton", "MethodButton", "TechRefButton", "TourButton", "ContactButton", "SourceButton",
+        "ThemeDarkToggle", "ThemeLightToggle", "GpuSlider", "ParticleBox", "ParticleAutoButton", "LogFolderButton", "MethodButton", "TechRefButton", "TourButton", "ContactButton", "SourceButton",
         // empty state (no model yet)
         "EmptySampleButton", "Open model…", "EmptyTourButton",
     ];
@@ -88,7 +91,8 @@ public static class UiTable
     [
         "BoxToggle", "ClipToggle", "BoxResetButton", "BoxGrowButton", "BoxV1Toggle", "DevicePalette", "DeviceList", "GhostToggle",
         "ParticleToggle", "SpeedSlider", "FieldPressureToggle", "FieldTempToggle", "ProbeToggle",
-        "HoldAButton", "HoldBButton", "CompareToggle", "SweepButton", "AnnualButton", "ExportMenuButton", "PanelToggle",
+        "HoldAButton", "HoldBButton", "CompareToggle", "SweepButton", "AnnualButton", "TurntableItem", "RecordMenuItem", "PanelToggle",
+        "SectionDevicesTab", "SectionStudiesTab",
         "TrustDetail", "AccurateBox", "OpeningModelToggle", "WallModelToggle", "DomainModeToggle", "RoomInspPeople", "InspCd",
     ];
 

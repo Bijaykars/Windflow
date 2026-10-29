@@ -2,190 +2,433 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vp="using:WindFlow.App.Viewport"
         xmlns:app="using:WindFlow.App"
+        xmlns:chrome="using:Avalonia.Controls.Chrome"
         x:Class="WindFlow.App.MainWindow"
         Icon="avares://WindFlow.App/Assets/windflow.ico"
         Title="WindFlow"
         Width="1680" Height="940" MinWidth="1180" MinHeight="620"
-        Background="{StaticResource Canvas}"
+        Background="{DynamicResource Canvas}"
         FontFamily="Inter, Segoe UI Variable Text, Segoe UI"
-        RequestedThemeVariant="Dark">
+        WindowDecorations="BorderOnly"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="44">
 
+  <!-- BorderOnly: the system frame, shadow and resize edges stay, the system title bar (icon, title, caption buttons) does
+       not; this window draws that bar itself. The taskbar and Alt-Tab still read Title and Icon. -->
   <!-- What each mode shows and what Lock disables is not decided here: UiTable.cs names the containers below
-       (ExpertViewTools, ExpertPanes, WindGroup, ...) and ApplyMode / SetLocked drive them from that table. -->
-  <Grid RowDefinitions="54,*,30">
+       (ExpertViewTools, ExpertPanes, WindGroup, ...) and ApplyMode / SetLocked drive them from that table.
+       Layout (Rhino / Fusion): the title bar carries the project menu, the workflow steps and the few big actions; the
+       command bar under it holds the tools of the current step; the panel on the right is tabbed; one status strip. -->
+  <Grid RowDefinitions="44,40,*,28">
 
-    <!-- top bar -->
-    <Border Grid.Row="0" Background="{StaticResource Panel}">
-      <!-- S4-03: at the 1180 DIP minimum the left group does not fit beside the right one: it scrolls (wheel / Shift+wheel / touch) and the right group
-           (legend, Export PDF, Basic / Expert, Panel, Settings) stays put. -->
-      <Grid ColumnDefinitions="*,Auto" Margin="20,0,14,0">
-        <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" Margin="0,0,10,0">
+    <!-- ============ title bar, merged: the empty area drags the window, a double-click maximises (OnTitleBarPress) ============ -->
+    <Border Grid.Row="0" x:Name="TopBar" Background="{DynamicResource Panel}" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Divider}"
+            chrome:WindowDecorationProperties.ElementRole="TitleBar" PointerPressed="OnTitleBarPress">
+      <Grid ColumnDefinitions="Auto,*,Auto" Margin="12,0,0,0">
         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-          <Border Width="9" Height="9" CornerRadius="2" Background="{StaticResource Accent}" />
-          <TextBlock Text="WINDFLOW" FontSize="12" FontWeight="SemiBold" LetterSpacing="2.4"
-                     Foreground="{StaticResource Text}" VerticalAlignment="Center" Margin="2,0,8,0" />
-          <Border Classes="sep" />
-          <Button x:Name="OpenModelButton" Classes="tool" Content="Open model…" Click="OnOpenModel"
-                  ToolTip.Tip="A model exported from Revit (.json), or geometry: OBJ, glTF, FBX, STL, 3DS, DAE." />
-          <Button x:Name="SaveModelButton" Classes="tool" Content="Save model…" Click="OnSaveModel"
-                  ToolTip.Tip="Save the model with your edits (devices, open and closed windows, discharge coefficients, occupants, names) as a .windflow.json that Open model… reads back." />
-          <Button x:Name="SampleButton" Classes="tool" Content="Sample" Click="OnSampleBuilding"
-                  ToolTip.Tip="Load the two-storey sample house." />
-          <Border Classes="sep" />
-
-          <StackPanel x:Name="WindGroup" Orientation="Horizontal" Spacing="8">
-            <TextBlock Classes="label" Text="WIND" />
-            <TextBox x:Name="WindDirBox" Classes="field" Text="270" Width="44"
-                     ToolTip.Tip="Where the wind comes from, degrees clockwise from north (270 = from the west). You can also drag the arrow in the view." />
-            <TextBlock Classes="unit" Text="° from" />
-            <TextBox x:Name="WindSpeedBox" Classes="field" Text="4" Width="38"
-                     ToolTip.Tip="Wind speed at 10 m height." />
-            <TextBlock Classes="unit" Text="m/s" />
-          </StackPanel>
-          <Button x:Name="RunButton" Classes="tool accent" Content="Run" Click="OnRun" MinWidth="64"
-                  ToolTip.Tip="Start the solver (Space pauses and resumes)." />
-          <ToggleButton x:Name="LockToggle" Classes="tool lock" Click="OnLock"
-                        ToolTip.Tip="Lock this result: the solver stops so the GPU is free, the air keeps flowing through the averaged field, and anything that would change the flow is greyed out. Click again to unlock and carry on from here.">
-            <StackPanel Orientation="Horizontal" Spacing="7">
-              <TextBlock x:Name="LockGlyph" Classes="glyph" Text="&#xE785;" />
-              <TextBlock x:Name="LockText" Text="Lock" VerticalAlignment="Center" />
+          <Border Width="18" Height="18" CornerRadius="5" Background="{DynamicResource Accent}">
+            <app:Icon Data="{StaticResource IconWind}" Width="12" Height="12" Stroke="2.6" Foreground="{DynamicResource AccentFg}" />
+          </Border>
+          <TextBlock Text="WindFlow" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource Text}" VerticalAlignment="Center" Margin="0,0,2,0" />
+          <!-- the project menu: open, save, the sample house and the exports; the button reads the model's name -->
+          <Button x:Name="ProjectMenuButton" Classes="ghost" MinHeight="32" CornerRadius="8" Padding="10,0,8,0"
+                  ToolTip.Tip="Open, save, the sample house and the exports.">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <TextBlock x:Name="ProjectMenuText" Text="No model" FontWeight="SemiBold" Foreground="{DynamicResource Text}" VerticalAlignment="Center" />
+              <app:Icon Classes="s" Data="{StaticResource IconChevronDown}" />
             </StackPanel>
-          </ToggleButton>
+            <Button.Flyout>
+              <Flyout Placement="BottomEdgeAlignedLeft" ShowMode="Standard">
+                <Border x:Name="ProjectMenuCard" Classes="card menuCard" Button.Click="OnMenuItemClick">
+                  <StackPanel>
+                    <Button x:Name="OpenModelButton" Classes="menu" Click="OnOpenModel"
+                            ToolTip.Tip="A model exported from Revit (.json), or geometry: OBJ, glTF, FBX, STL, 3DS, DAE.">
+                      <Grid ColumnDefinitions="26,*,Auto">
+                        <app:Icon Data="{StaticResource IconFolderOpen}" HorizontalAlignment="Left" />
+                        <TextBlock Grid.Column="1" Text="Open model…" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="2" Classes="kbd" Text="Ctrl+O" />
+                      </Grid>
+                    </Button>
+                    <Button x:Name="SaveModelButton" Classes="menu" Click="OnSaveModel"
+                            ToolTip.Tip="Save the model with your edits (devices, open and closed windows, discharge coefficients, occupants, names) as a .windflow.json that Open model… reads back.">
+                      <Grid ColumnDefinitions="26,*,Auto">
+                        <app:Icon Data="{StaticResource IconSave}" HorizontalAlignment="Left" />
+                        <TextBlock Grid.Column="1" Text="Save model…" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="2" Classes="kbd" Text="Ctrl+S" />
+                      </Grid>
+                    </Button>
+                    <Button x:Name="SampleButton" Classes="menu" Click="OnSampleBuilding" ToolTip.Tip="Load the two-storey sample house.">
+                      <Grid ColumnDefinitions="26,*">
+                        <app:Icon Data="{StaticResource IconHouse}" HorizontalAlignment="Left" />
+                        <TextBlock Grid.Column="1" Text="Open sample building" VerticalAlignment="Center" />
+                      </Grid>
+                    </Button>
+                    <Border Classes="menuSep" />
+                    <Button Classes="menu" Click="OnExportReport" Content="Export PDF report"
+                            ToolTip.Tip="A PDF report: the room table, a plan at 1.1 m of every analysed storey and a long section.">
+                      <Button.ContentTemplate>
+                        <DataTemplate x:DataType="x:String">
+                          <Grid ColumnDefinitions="26,*">
+                            <app:Icon Data="{StaticResource IconFileText}" HorizontalAlignment="Left" />
+                            <TextBlock Grid.Column="1" Text="{Binding}" VerticalAlignment="Center" />
+                          </Grid>
+                        </DataTemplate>
+                      </Button.ContentTemplate>
+                    </Button>
+                    <!-- video exports, Expert only (UiTable row) -->
+                    <StackPanel x:Name="ExportVideoGroup">
+                      <Button x:Name="TurntableItem" Classes="menu" Click="OnExportTurntable">
+                        <Grid ColumnDefinitions="26,*">
+                          <app:Icon Data="{StaticResource IconFilm}" HorizontalAlignment="Left" />
+                          <TextBlock Grid.Column="1" Text="Turntable video, 12 s" VerticalAlignment="Center" />
+                        </Grid>
+                      </Button>
+                      <Button x:Name="RecordMenuItem" Classes="menu" Click="OnExportRecord">
+                        <Grid ColumnDefinitions="26,*">
+                          <app:Icon Data="{StaticResource IconVideo}" HorizontalAlignment="Left" />
+                          <TextBlock x:Name="RecordMenuText" Grid.Column="1" Text="Record video" VerticalAlignment="Center" />
+                        </Grid>
+                      </Button>
+                    </StackPanel>
+                  </StackPanel>
+                </Border>
+              </Flyout>
+            </Button.Flyout>
+          </Button>
         </StackPanel>
-
+        <!-- the workflow: where you are from Model to Report. Each step opens what already exists (OnWorkflow).
+             At the 1180 DIP minimum it is the one thing that gives way: it clips on the right, the actions stay whole. -->
+        <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" VerticalAlignment="Center">
+          <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <Border Classes="sep" />
+          <Border x:Name="WorkflowTabs" Classes="segment" Margin="2,0,0,0">
+            <StackPanel>
+              <Button x:Name="WfModel" Classes="wf" Tag="0" Click="OnWorkflow" ToolTip.Tip="Model: open a building, the sample house, save. Rooms and openings are in the panel.">
+                <StackPanel Orientation="Horizontal">
+                  <Border Classes="n"><Panel><TextBlock Text="1" /><app:Icon Data="{StaticResource IconCheck}" Stroke="3.2" /></Panel></Border>
+                  <TextBlock Text="Model" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button x:Name="WfWind" Classes="wf" Tag="1" Click="OnWorkflow" ToolTip.Tip="Wind: where it comes from and how fast (the pill on the command bar).">
+                <StackPanel Orientation="Horizontal">
+                  <Border Classes="n"><Panel><TextBlock Text="2" /><app:Icon Data="{StaticResource IconCheck}" Stroke="3.2" /></Panel></Border>
+                  <TextBlock Text="Wind" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button x:Name="WfSimulate" Classes="wf" Tag="2" Click="OnWorkflow" ToolTip.Tip="Simulate: Run, then watch the air; the View tab sets the cut and the still-air threshold.">
+                <StackPanel Orientation="Horizontal">
+                  <Border Classes="n"><Panel><TextBlock Text="3" /><app:Icon Data="{StaticResource IconCheck}" Stroke="3.2" /></Panel></Border>
+                  <TextBlock Text="Simulate" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button x:Name="WfResults" Classes="wf" Tag="3" Click="OnWorkflow" ToolTip.Tip="Results: each room's fresh air, in the Rooms tab.">
+                <StackPanel Orientation="Horizontal">
+                  <Border Classes="n"><Panel><TextBlock Text="4" /><app:Icon Data="{StaticResource IconCheck}" Stroke="3.2" /></Panel></Border>
+                  <TextBlock Text="Results" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button x:Name="WfReport" Classes="wf" Tag="4" Click="OnWorkflow" ToolTip.Tip="Report: export the PDF.">
+                <StackPanel Orientation="Horizontal">
+                  <Border Classes="n"><Panel><TextBlock Text="5" /><app:Icon Data="{StaticResource IconCheck}" Stroke="3.2" /></Panel></Border>
+                  <TextBlock Text="Report" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+            </StackPanel>
+          </Border>
+          </StackPanel>
         </ScrollViewer>
 
-        <!-- exports, mode, settings. The view controls and the speed legend sit on the viewport header below. -->
-        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
-          <Button x:Name="ReportButton" Classes="tool" Content="Export PDF" Click="OnExportReport"
-                  ToolTip.Tip="A PDF report: the room table, a plan at 1.1 m of every analysed storey and a long section." />
-          <Button x:Name="ExportMenuButton" Classes="tool" Content="▾" Padding="9,7" Margin="-4,0,0,0"
-                  ToolTip.Tip="More exports">
-            <Button.Flyout>
-              <MenuFlyout Placement="BottomEdgeAlignedRight">
-                <MenuItem Header="Turntable video, 12 s" Click="OnExportTurntable" />
-                <MenuItem x:Name="RecordMenuItem" Header="Record video" Click="OnExportRecord" />
-              </MenuFlyout>
-            </Button.Flyout>
+        <!-- the big actions: Run (the one filled button), Export PDF, the mode, then the quiet icons and the caption buttons -->
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Stretch">
+          <Button x:Name="RunButton" VerticalAlignment="Center" Classes="primary" Content="Run" Click="OnRun" MinWidth="92"
+                  ToolTip.Tip="Start the solver (Space pauses and resumes).">
+            <Button.ContentTemplate>
+              <DataTemplate x:DataType="x:String">
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                  <app:Icon Data="{Binding Converter={StaticResource RunIcon}}" Stroke="2.4" />
+                  <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+                </StackPanel>
+              </DataTemplate>
+            </Button.ContentTemplate>
           </Button>
+          <Button x:Name="ReportButton" Classes="secondary" Content="Export PDF" Click="OnExportReport"
+                  ToolTip.Tip="A PDF report: the room table, a plan at 1.1 m of every analysed storey and a long section.">
+            <Button.ContentTemplate>
+              <DataTemplate x:DataType="x:String">
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                  <app:Icon Data="{StaticResource IconFileText}" />
+                  <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+                </StackPanel>
+              </DataTemplate>
+            </Button.ContentTemplate>
+          </Button>
+          <Border Classes="segment">
+            <StackPanel>
+              <ToggleButton x:Name="BasicToggle" Classes="seg" Content="Basic" Click="OnBasicMode"
+                            ToolTip.Tip="Load, wind, openings, run, rooms, PDF. Nothing else." />
+              <ToggleButton x:Name="ExpertToggle" Classes="seg" Content="Expert" Click="OnExpertMode"
+                            ToolTip.Tip="Everything else: simulation box, devices, slices, probes, compare, best windows, annual, video." />
+            </StackPanel>
+          </Border>
           <Border Classes="sep" />
-          <ToggleButton x:Name="BasicToggle" Classes="tool seg" Content="Basic" Click="OnBasicMode" Margin="0"
-                        ToolTip.Tip="Load, wind, openings, run, rooms, PDF. Nothing else." />
-          <ToggleButton x:Name="ExpertToggle" Classes="tool seg" Content="Expert" Click="OnExpertMode"
-                        ToolTip.Tip="Everything else: simulation box, devices, slices, probes, compare, best windows, annual, video." />
-          <ToggleButton x:Name="PanelToggle" Classes="tool" Content="Panel" IsChecked="True" Click="OnTogglePanel"
-                        ToolTip.Tip="Show or hide the side panel." />
-          <Button x:Name="HelpButton" Classes="tool" Padding="10,7" ToolTip.Tip="Help: how WindFlow works, the Technical Reference and the tour">
-            <TextBlock Classes="glyph" Text="&#xE897;" />
+          <ToggleButton x:Name="LockToggle" Classes="ghost icon lock" Click="OnLock"
+                        ToolTip.Tip="Lock this result: the solver stops so the GPU is free, the air keeps flowing through the averaged field, and anything that would change the flow is greyed out. Click again to unlock and carry on from here.">
+            <StackPanel Orientation="Horizontal" Spacing="6" Margin="8,0">
+              <app:Icon Classes="open" Data="{StaticResource IconLockOpen}" />
+              <app:Icon Classes="closed" Data="{StaticResource IconLock}" />
+              <TextBlock x:Name="LockGlyph" Classes="glyph" Text="&#xE785;" IsVisible="False" />
+              <TextBlock x:Name="LockText" Text="Lock" VerticalAlignment="Center" IsVisible="False" />
+            </StackPanel>
+          </ToggleButton>
+          <ToggleButton x:Name="PanelToggle" Classes="ghost icon" IsChecked="True" Click="OnTogglePanel" ToolTip.Tip="Show or hide the side panel.">
+            <app:Icon Data="{StaticResource IconPanelRight}" />
+          </ToggleButton>
+          <Button x:Name="HelpButton" Classes="ghost icon" ToolTip.Tip="Help: how WindFlow works, the Technical Reference and the tour">
+            <app:Icon Data="{StaticResource IconCircleHelp}" />
             <Button.Flyout>
-              <MenuFlyout Placement="BottomEdgeAlignedRight">
-                <MenuItem x:Name="HelpMethodItem" Header="How WindFlow works (2-page PDF)" Click="OnOpenMethod" />
-                <MenuItem x:Name="HelpTechRefItem" Header="Technical Reference (PDF)" Click="OnOpenTechRef" />
-                <MenuItem x:Name="HelpTourItem" Header="Take the tour" Click="OnTakeTour" />
-                <MenuItem x:Name="HelpContactItem" Header="Contact / report a problem" Click="OnContact" />
-              </MenuFlyout>
+              <Flyout Placement="BottomEdgeAlignedRight" ShowMode="Standard">
+                <Border x:Name="HelpMenuCard" Classes="card menuCard" Button.Click="OnMenuItemClick">
+                  <StackPanel>
+                    <Button x:Name="HelpMethodItem" Classes="menu" Content="How WindFlow works (2-page PDF)" HorizontalContentAlignment="Left" Click="OnOpenMethod" />
+                    <Button x:Name="HelpTechRefItem" Classes="menu" Content="Technical Reference (PDF)" HorizontalContentAlignment="Left" Click="OnOpenTechRef" />
+                    <Button x:Name="HelpTourItem" Classes="menu" Content="Take the tour" HorizontalContentAlignment="Left" Click="OnTakeTour" />
+                    <Border Classes="menuSep" />
+                    <Button x:Name="HelpContactItem" Classes="menu" Content="Contact / report a problem" HorizontalContentAlignment="Left" Click="OnContact" />
+                  </StackPanel>
+                </Border>
+              </Flyout>
             </Button.Flyout>
           </Button>
-          <Button x:Name="GearButton" Classes="tool" Padding="10,7" Click="OnSettings" ToolTip.Tip="Settings">
-            <TextBlock Classes="glyph" Text="&#xE713;" />
+          <Button x:Name="GearButton" Classes="ghost icon" Click="OnSettings" ToolTip.Tip="Settings">
+            <app:Icon Data="{StaticResource IconSettings}" />
           </Button>
+          <!-- caption buttons, drawn here with the system roles so Windows 11 snap layouts and the usual clicks work -->
+          <StackPanel x:Name="CaptionButtons" Orientation="Horizontal" Margin="4,0,0,0">
+            <Button x:Name="CaptionMinimize" Classes="caption" chrome:WindowDecorationProperties.ElementRole="MinimizeButton" Click="OnCaptionMinimize" ToolTip.Tip="Minimise">
+              <app:Icon Data="{StaticResource IconMinus}" Width="12" Height="12" Stroke="1.6" />
+            </Button>
+            <Button x:Name="CaptionMaximize" Classes="caption" chrome:WindowDecorationProperties.ElementRole="MaximizeButton" Click="OnCaptionMaximize" ToolTip.Tip="Maximise">
+              <app:Icon Data="{StaticResource IconSquare}" Width="11" Height="11" Stroke="1.6" />
+            </Button>
+            <Button x:Name="CaptionClose" Classes="caption close" chrome:WindowDecorationProperties.ElementRole="CloseButton" Click="OnCaptionClose" ToolTip.Tip="Close">
+              <app:Icon Data="{StaticResource IconX}" Width="12" Height="12" Stroke="1.6" />
+            </Button>
+          </StackPanel>
         </StackPanel>
       </Grid>
     </Border>
 
-    <!-- viewport + side panel, side by side: no Avalonia content ever overlaps the child HWND -->
-    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
-      <!-- Viewport header (a 3D tool's view header): what the view shows, a sibling row above the HWND, never over it. -->
-      <Border x:Name="ViewportHeader" Grid.Column="0" Height="34" Background="{StaticResource Panel}"
-              BorderThickness="0,1,0,0" BorderBrush="{StaticResource Divider}" VerticalAlignment="Top"
-              IsVisible="{Binding #Viewport3D.IsVisible}">
-        <Grid ColumnDefinitions="*,Auto" Margin="20,0,14,0">
+    <!-- ============ command bar: the tools of the current step. At the 1180 DIP minimum the left group scrolls (S4-03); the legend stays put. ============ -->
+    <Border Grid.Row="1" x:Name="CommandBar" Background="{DynamicResource Panel}" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Divider}">
+      <Grid ColumnDefinitions="*,Auto" Margin="12,0,14,0">
+        <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" Margin="0,0,10,0">
           <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-            <TextBlock Classes="label" Text="VIEW" />
-            <ToggleButton x:Name="SpeedModeToggle" Classes="tool small seg" Content="Speed" Click="OnSpeedMode" Margin="0"
-                          ToolTip.Tip="Moving air, coloured by speed (legend on the right)." />
-            <ToggleButton x:Name="StillModeToggle" Classes="tool small seg" Content="Still air" Click="OnStillMode"
-                          ToolTip.Tip="V: a map of dead air. Every air cell slower than the threshold in the panel is drawn as amber cloud, brighter the slower it is; moving air is left empty." />
+
+            <!-- Wind: one pill reading "W 270° · 4 m/s"; the pop-over holds the compass, the slider and the exact boxes
+                 (the same WindDirBox / WindSpeedBox the solver, the drag arrow and the live link write). Disabled while locked (UiTable). -->
+            <StackPanel x:Name="WindGroup" Orientation="Horizontal">
+              <Button x:Name="WindPill" Classes="secondary pill" Click="OnWindPill"
+                      ToolTip.Tip="Where the wind comes from and how fast it blows at 10 m. Click to set it on a compass; you can also drag the arrow in the view.">
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                  <app:Icon Data="{StaticResource IconCompass}" Foreground="{DynamicResource TextMuted}" />
+                  <TextBlock x:Name="WindPillText" Text="W 270° · 4 m/s" FontWeight="SemiBold" VerticalAlignment="Center" />
+                  <app:Icon Classes="s caret" Data="{StaticResource IconChevronDown}" />
+                </StackPanel>
+              </Button>
+              <Popup x:Name="WindPopup" PlacementTarget="{Binding #WindPill}" Placement="BottomEdgeAlignedLeft" VerticalOffset="6"
+                     IsLightDismissEnabled="True">
+                <Border x:Name="WindCard" Classes="card" Width="304" Padding="14,12,14,12" IsEnabled="{Binding #WindGroup.IsEffectivelyEnabled}">
+                  <StackPanel Spacing="10">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock Classes="section" Text="WIND" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="1" Classes="rowSub" Text="drag the dial · snaps to 5°" />
+                    </Grid>
+                    <app:CompassDial x:Name="WindDial" HorizontalAlignment="Center" Margin="0,2,0,2"
+                                     Accent="{DynamicResource Accent}" Ring="{DynamicResource Border}" Face="{DynamicResource Surface}" Label="{DynamicResource TextMuted}" />
+                    <Grid ColumnDefinitions="52,Auto,Auto,*" ColumnSpacing="8">
+                      <TextBlock Classes="unit" Text="from" />
+                      <TextBox x:Name="WindDirBox" Grid.Column="1" Classes="field" Text="270" Width="56"
+                               ToolTip.Tip="Where the wind comes from, degrees clockwise from north (270 = from the west). You can also drag the arrow in the view." />
+                      <TextBlock Grid.Column="2" Classes="unit" Text="°" />
+                      <TextBlock x:Name="WindCardinalText" Grid.Column="3" Classes="rowSub" Text="clockwise from north · W" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="52,*,Auto,Auto" ColumnSpacing="8">
+                      <TextBlock Classes="unit" Text="speed" />
+                      <Slider x:Name="WindSpeedSlider" Grid.Column="1" Minimum="0" Maximum="40" Value="4" TickFrequency="0.5" IsSnapToTickEnabled="True"
+                              ValueChanged="OnWindSpeedSlider" VerticalAlignment="Center" />
+                      <TextBox x:Name="WindSpeedBox" Grid.Column="2" Classes="field" Text="4" Width="56" ToolTip.Tip="Wind speed at 10 m height, 0 to 40 m/s." />
+                      <TextBlock Grid.Column="3" Classes="unit" Text="m/s" />
+                    </Grid>
+                    <TextBlock Classes="rowSub" Text="At 10 m height. The arrow in the view can be dragged too." />
+                  </StackPanel>
+                </Border>
+              </Popup>
+            </StackPanel>
+
+            <!-- everything past the wind needs a model: hidden with the viewport in the empty state, as the old view header was -->
+            <StackPanel x:Name="ModelTools" Orientation="Horizontal" Spacing="8" IsVisible="{Binding #Viewport3D.IsVisible}">
+            <!-- Which recipe the Accurate pass runs. Standard is the steady-wind answer; High adds gusts and supply turbulence
+                 and so reports ranges. The time budget and the fine box belong to High only. Disabled while locked (UiTable). -->
+            <StackPanel x:Name="AccurateControls" Orientation="Horizontal" Spacing="6">
+              <Border Classes="segment small">
+                <StackPanel>
+                  <ToggleButton x:Name="AccurateStandardToggle" Classes="seg small" Content="Standard" IsChecked="True" Click="OnAccurateMode"
+                                ToolTip.Tip="Standard: a perfectly steady wind and smooth supplies, up to 10 minutes (large models end time-limited). Rooms ventilated mainly by gusts (one opening, or windows only on walls parallel to the wind) read low: compare with High." />
+                  <ToggleButton x:Name="AccurateHighToggle" Classes="seg small" Content="High" Click="OnAccurateMode"
+                                ToolTip.Tip="High (gusty wind): gusty wind (EN 1991-1-4 turbulence) and turbulent supplies, averaged for the time budget you pick. The numbers move batch to batch, so each room shows a ± range; a gusty answer can sit outside Standard's range. Not more accurate than Standard: it models a different wind. The fine box and memory plan assume the Compact wind domain (headless High runs use Compact)." />
+                  <ToggleButton x:Name="AccurateUltraToggle" Classes="seg small" Content="Ultra" Click="OnAccurateMode" ToolTip.ShowOnDisabled="True"
+                                ToolTip.Tip="Ultra: the finest grid your GPU fits, as fine as the narrowest open window or door needs (16 cells across), run for hours (6 to 24 h, saved as it goes so it can resume). Wind only, no thermal. Accuracy not separately validated. A confirm dialog shows the estimate first." />
+                </StackPanel>
+              </Border>
+              <StackPanel x:Name="UltraCapGroup" Orientation="Horizontal" Spacing="4" IsVisible="False"
+                          ToolTip.Tip="Time limit of the Ultra run, hours. It stops earlier when every room has settled. Applies to the next Ultra run and is remembered.">
+                <Border Classes="segment small">
+                  <StackPanel>
+                    <ToggleButton x:Name="UCap6Toggle" Classes="seg small" Content="6" Tag="6" Click="OnUltraCap" />
+                    <ToggleButton x:Name="UCap12Toggle" Classes="seg small" Content="12" Tag="12" Click="OnUltraCap" />
+                    <ToggleButton x:Name="UCap20Toggle" Classes="seg small" Content="20" Tag="20" Click="OnUltraCap" />
+                    <ToggleButton x:Name="UCap24Toggle" Classes="seg small" Content="24" Tag="24" Click="OnUltraCap" />
+                  </StackPanel>
+                </Border>
+                <TextBlock Classes="unit" Text="h" Margin="2,0,0,0" />
+              </StackPanel>
+              <StackPanel x:Name="HighCapGroup" Orientation="Horizontal" Spacing="4" IsVisible="False"
+                          ToolTip.Tip="Time budget of the High pass, minutes of stepping. It stops at the budget whatever the ranges are, and says so. Applies to the next pass and is remembered.">
+                <Border Classes="segment small">
+                  <StackPanel>
+                    <ToggleButton x:Name="Cap5Toggle" Classes="seg small" Content="5" Tag="5" Click="OnAccurateCap" />
+                    <ToggleButton x:Name="Cap10Toggle" Classes="seg small" Content="10" Tag="10" Click="OnAccurateCap" />
+                    <ToggleButton x:Name="Cap20Toggle" Classes="seg small" Content="20" Tag="20" Click="OnAccurateCap" />
+                    <ToggleButton x:Name="Cap30Toggle" Classes="seg small" Content="30" Tag="30" Click="OnAccurateCap" />
+                  </StackPanel>
+                </Border>
+                <TextBlock Classes="unit" Text="min" Margin="2,0,0,0" />
+              </StackPanel>
+              <ToggleButton x:Name="FocusBoxToggle" Classes="ghost small" Content="Fine box on the selected room" Click="OnFocusBox"
+                            IsVisible="False" ToolTip.ShowOnDisabled="True"
+                            ToolTip.Tip="High only: a 2:1 finer grid around one room, the room selected or isolated when you switch this on (the label names it). Isothermal passes only; a room that does not fit the graphics memory runs without the box and the pass line says so. Switch off and on again to move it to another room." />
+            </StackPanel>
             <Border Classes="sep" />
-            <ToggleButton x:Name="SliceHToggle" Classes="tool small" Content="Plan" Click="OnSliceH"
-                          ToolTip.Tip="S: a horizontal cut through the air at the height set in the View section, like a floor plan coloured by the air." />
-            <ToggleButton x:Name="SliceVToggle" Classes="tool small" Content="Section" Click="OnSliceV"
-                          ToolTip.Tip="A vertical cut through the air along the line set in the View section, like a building section coloured by the air." />
-            <!-- Room isolate: a view state, so it sits with the view controls and is visible in both modes. -->
-            <Button x:Name="IsolateChip" Classes="tool small isolate" Click="OnIsolateChip" IsVisible="False"
+
+            <!-- the view: what the particles show, and the cut -->
+            <Border Classes="segment small">
+              <StackPanel>
+                <ToggleButton x:Name="SpeedModeToggle" Classes="seg small" Content="Speed" Click="OnSpeedMode"
+                              ToolTip.Tip="Moving air, coloured by speed (legend on the right)." />
+                <ToggleButton x:Name="StillModeToggle" Classes="seg small" Content="Still air" Click="OnStillMode"
+                              ToolTip.Tip="V: a map of dead air. Every air cell slower than the threshold in the View tab is drawn as amber cloud, brighter the slower it is; moving air is left empty." />
+              </StackPanel>
+            </Border>
+            <Border Classes="segment small">
+              <StackPanel>
+                <ToggleButton x:Name="SliceHToggle" Classes="seg small" Content="Plan" Click="OnSliceH"
+                              ToolTip.Tip="S: a horizontal cut through the air at the height set in the View tab, like a floor plan coloured by the air." />
+                <ToggleButton x:Name="SliceVToggle" Classes="seg small" Content="Section" Click="OnSliceV"
+                              ToolTip.Tip="A vertical cut through the air along the line set in the View tab, like a building section coloured by the air." />
+              </StackPanel>
+            </Border>
+            <StackPanel x:Name="ExpertViewTools" Orientation="Horizontal" Spacing="6">
+              <ToggleButton x:Name="GhostToggle" Classes="ghost small" Content="Ghost" Click="OnGhostClick"
+                            ToolTip.Tip="G: translucent walls. X cycles solid, ghost and X-ray." />
+              <ToggleButton x:Name="ParticleToggle" Classes="ghost small" Content="Particles" Click="OnParticlesClick"
+                            ToolTip.Tip="P: the moving particles." />
+              <Border Classes="sep" />
+              <ToggleButton x:Name="BoxToggle" Classes="ghost small" Content="Box" Click="OnBoxToggle"
+                            ToolTip.Tip="Draw a fine box around an area to see its airflow in more detail; room numbers still come from the whole-building run." />
+              <ToggleButton x:Name="ClipToggle" Classes="ghost small" Content="Clip" Click="OnClipToggle"
+                            ToolTip.Tip="Clip the building and the slice to the box (a section box). Particles are not clipped." />
+              <Button x:Name="BoxResetButton" Classes="ghost small" Content="Remove fine box" Click="OnBoxReset" IsVisible="False"
+                      ToolTip.Tip="Removes the fine box; the whole building runs at the normal grid again." />
+              <Button x:Name="BoxGrowButton" Classes="ghost small" Content="Fit box to openings" Click="OnBoxGrow" IsVisible="False"
+                      ToolTip.Tip="Enlarges the fine box so no open window or device sits in its blended edge." />
+            </StackPanel>
+            <Border Classes="sep" />
+
+            <!-- edits in the view: add an opening or a room by clicking, frame the selection. Both disabled while locked (UiTable). -->
+            <Button x:Name="OpeningAddButton" Classes="ghost small" Content="+ Add opening" Click="OnOpeningAdd"
+                    ToolTip.Tip="Click a wall in the 3D view to put a window there (1.2 x 1.2 m, sill 0.9 m). Wrongly detected? Use × on its row, Delete in the inspector, or the Delete key." />
+            <Button x:Name="RoomAddButton" Classes="ghost small" Content="+ Add room" Click="OnRoomAdd"
+                    ToolTip.Tip="Click inside a space in the 3D view to make it a room: the walled-in air at that point, found by the same detection the importer uses. Wrongly detected or not wanted? Use × on its row, Delete in the inspector, or the Delete key." />
+            <Button Classes="ghost small" Content="Frame" Click="OnFrameSelection" ToolTip.Tip="F: put the camera on the selected room or opening (the whole building when nothing is selected)." />
+            <!-- Room isolate: a view state, so it sits with the view tools and is visible in both modes. -->
+            <Button x:Name="IsolateChip" Classes="ghost small isolate" Click="OnIsolateChip" IsVisible="False"
                     ToolTip.Tip="One room is shown on its own. View only: the simulation and the numbers are unchanged. Click, press Esc, or use Show all in the inspector to see every room again.">
               <StackPanel Orientation="Horizontal" Spacing="8">
                 <TextBlock x:Name="IsolateChipText" Text="Isolated: —" VerticalAlignment="Center" />
-                <TextBlock Classes="glyph" Text="&#xE711;" FontSize="10" />
+                <app:Icon Classes="s" Data="{StaticResource IconX}" />
               </StackPanel>
             </Button>
-
-            <StackPanel x:Name="ExpertViewTools" Orientation="Horizontal" Spacing="8">
-              <Border Classes="sep" />
-              <ToggleButton x:Name="BoxToggle" Classes="tool small" Content="Box" Click="OnBoxToggle"
-                            ToolTip.Tip="Simulation box: drag the six face handles or the centre. A grid at half the cell size is solved inside it, fed by the whole-building run (isothermal runs only)." />
-              <ToggleButton x:Name="ClipToggle" Classes="tool small" Content="Clip" Click="OnClipToggle"
-                            ToolTip.Tip="Clip the building and the slice to the box (a section box). Particles are not clipped." />
-              <Button x:Name="BoxResetButton" Classes="tool small" Content="Reset box" Click="OnBoxReset" IsVisible="False"
-                      ToolTip.Tip="Drop the simulation box and solve the whole building again." />
-              <Button x:Name="BoxGrowButton" Classes="tool small" Content="Grow box" Click="OnBoxGrow" IsVisible="False"
-                      ToolTip.Tip="Some openings sit in the box's blend band, where the fine grid is pulled toward the coarse run and adds little. Grow the box face by face until none does." />
             </StackPanel>
           </StackPanel>
+        </ScrollViewer>
 
-          <!-- speed legend: airspace rule keeps it out of the viewport -->
-          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
-            <TextBlock x:Name="LegendTitle" Classes="label" Text="SPEED" />
-            <TextBlock x:Name="LegendMin" Classes="unit" Text="0" />
-            <StackPanel VerticalAlignment="Center">
-              <Border x:Name="LegendBar" Width="132" Height="7" CornerRadius="3.5" />
-              <!-- quarter ticks: a 4-column grid puts a 2-span centred label exactly on each column boundary -->
-              <Grid x:Name="LegendTicks" Width="132" ColumnDefinitions="*,*,*,*" RowDefinitions="3,Auto" Margin="0,1,0,0">
-                <Border Grid.ColumnSpan="2" Width="1" Height="3" HorizontalAlignment="Center" Background="{DynamicResource TextMuted}" />
-                <Border Grid.Column="1" Grid.ColumnSpan="2" Width="1" Height="3" HorizontalAlignment="Center" Background="{DynamicResource TextMuted}" />
-                <Border Grid.Column="2" Grid.ColumnSpan="2" Width="1" Height="3" HorizontalAlignment="Center" Background="{DynamicResource TextMuted}" />
-                <TextBlock x:Name="LegendTick1" Grid.Row="1" Grid.ColumnSpan="2" Classes="unit" FontSize="9.5" HorizontalAlignment="Center" />
-                <TextBlock x:Name="LegendTick2" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Classes="unit" FontSize="9.5" HorizontalAlignment="Center" />
-                <TextBlock x:Name="LegendTick3" Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Classes="unit" FontSize="9.5" HorizontalAlignment="Center" />
-              </Grid>
-            </StackPanel>
-            <TextBlock x:Name="LegendMax" Classes="unit" Text="— m/s" />
+        <!-- speed legend: airspace rule keeps it out of the viewport -->
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" IsVisible="{Binding #Viewport3D.IsVisible}">
+          <TextBlock x:Name="LegendTitle" Classes="label" Text="SPEED" />
+          <TextBlock x:Name="LegendMin" Classes="unit" Text="0" />
+          <StackPanel VerticalAlignment="Center">
+            <Border x:Name="LegendBar" Width="150" Height="8" CornerRadius="4" />
+            <!-- quarter ticks: a 4-column grid puts a 2-span centred label exactly on each column boundary -->
+            <Grid x:Name="LegendTicks" Width="150" ColumnDefinitions="*,*,*,*" RowDefinitions="3,Auto" Margin="0,1,0,0">
+              <Border Grid.ColumnSpan="2" Width="1" Height="3" HorizontalAlignment="Center" Background="{DynamicResource TextMuted}" />
+              <Border Grid.Column="1" Grid.ColumnSpan="2" Width="1" Height="3" HorizontalAlignment="Center" Background="{DynamicResource TextMuted}" />
+              <Border Grid.Column="2" Grid.ColumnSpan="2" Width="1" Height="3" HorizontalAlignment="Center" Background="{DynamicResource TextMuted}" />
+              <TextBlock x:Name="LegendTick1" Grid.Row="1" Grid.ColumnSpan="2" Classes="unit" FontSize="9.5" HorizontalAlignment="Center" />
+              <TextBlock x:Name="LegendTick2" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Classes="unit" FontSize="9.5" HorizontalAlignment="Center" />
+              <TextBlock x:Name="LegendTick3" Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Classes="unit" FontSize="9.5" HorizontalAlignment="Center" />
+            </Grid>
           </StackPanel>
-        </Grid>
-      </Border>
-      <vp:ViewportHost x:Name="Viewport3D" Grid.Column="0" Margin="0,34,0,0" />
+          <TextBlock x:Name="LegendMax" Classes="unit" Text="— m/s" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- ============ viewport + side panel, side by side: no Avalonia content ever overlaps the child HWND ============ -->
+    <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+      <vp:ViewportHost x:Name="Viewport3D" Grid.Column="0" />
 
       <!-- Empty state: the native viewport is hidden until a model exists, so this is plain Avalonia. -->
       <StackPanel x:Name="EmptyState" Grid.Column="0" IsVisible="False" Spacing="14"
-                  HorizontalAlignment="Center" VerticalAlignment="Center" Width="360">
-        <TextBlock Text="No building loaded" FontSize="21" FontWeight="SemiBold"
-                   Foreground="{StaticResource Text}" HorizontalAlignment="Center" />
+                  HorizontalAlignment="Center" VerticalAlignment="Center" Width="380">
+        <Border Width="44" Height="44" CornerRadius="12" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Border}" BorderThickness="1" HorizontalAlignment="Center">
+          <app:Icon Data="{StaticResource IconHouse}" Width="20" Height="20" Foreground="{DynamicResource TextMuted}" />
+        </Border>
+        <TextBlock Text="No building loaded" FontSize="20" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Text}" HorizontalAlignment="Center" />
         <TextBlock HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
-                   FontSize="12.5" Foreground="{StaticResource TextMuted}"
+                   FontSize="12.5" Foreground="{DynamicResource TextMuted}"
                    Text="Open a model exported from Revit, or start with the sample house to see air move through rooms." />
-        <StackPanel Orientation="Horizontal" Spacing="9" HorizontalAlignment="Center" Margin="0,4,0,0">
-          <Button x:Name="EmptySampleButton" Classes="tool accent" Content="Sample building" Click="OnSampleBuilding" />
-          <Button Classes="tool" Content="Open model…" Click="OnOpenModel" />
+        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center" Margin="0,4,0,0">
+          <Button x:Name="EmptySampleButton" Classes="tool accent" MinHeight="32" Content="Sample building" Click="OnSampleBuilding" />
+          <Button Classes="secondary" Content="Open model…" Click="OnOpenModel" />
         </StackPanel>
         <Button x:Name="EmptyTourButton" Classes="link" Content="Take the tour" Click="OnTakeTour" HorizontalAlignment="Center"
                 ToolTip.Tip="Twelve short steps that point out where things are." />
       </StackPanel>
 
-      <Border x:Name="ResultsPanel" Grid.Column="1" Width="344" Background="{StaticResource Panel}">
-        <!-- picker · import note · the list (scrolls) · the inspector (pinned) · the footer (pinned) -->
+      <Border x:Name="ResultsPanel" Grid.Column="1" Width="344" Background="{DynamicResource Panel}" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource Divider}">
+        <!-- tabs · import note · the list (scrolls) · the inspector (pinned) · the footer (pinned) -->
         <Grid RowDefinitions="Auto,Auto,*,Auto,Auto">
 
-          <!-- One drop-down picks the section: Rooms, Openings, View (Basic), plus Devices, Studies (Expert). Rooms on open. -->
-          <ComboBox x:Name="SectionPicker" Grid.Row="0" Classes="picker" Margin="18,12,14,0" HorizontalAlignment="Stretch"
-                    SelectionChanged="OnSection" AutomationProperties.Name="Section"
-                    ToolTip.Tip="Rooms, Openings, View; in Expert also Devices and Studies." />
+          <!-- The panel's tabs: Rooms, Openings, View in Basic; Devices and Studies in Expert (UiTable row ExpertTabs). Rooms on open. -->
+          <Border Grid.Row="0" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Divider}">
+            <StackPanel x:Name="SectionTabs" Orientation="Horizontal" Margin="6,0,0,0" Spacing="2">
+              <ToggleButton x:Name="SectionRoomsTab" Classes="ptab" Content="Rooms" Tag="0" Click="OnSectionTab" ToolTip.Tip="The rooms and, after a run, each one's fresh air." />
+              <ToggleButton x:Name="SectionOpeningsTab" Classes="ptab" Content="Openings" Tag="1" Click="OnSectionTab" ToolTip.Tip="Every window and door: open or close them, see the flow through each." />
+              <ToggleButton x:Name="SectionViewTab" Classes="ptab" Content="View" Tag="2" Click="OnSectionTab" ToolTip.Tip="Still-air threshold, the cut, the environment." />
+              <StackPanel x:Name="ExpertTabs" Orientation="Horizontal" Spacing="2">
+                <ToggleButton x:Name="SectionDevicesTab" Classes="ptab" Content="Devices" Tag="3" Click="OnSectionTab" ToolTip.Tip="Fans, air conditioners, exhausts and diffusers in the run." />
+                <ToggleButton x:Name="SectionStudiesTab" Classes="ptab" Content="Studies" Tag="4" Click="OnSectionTab" ToolTip.Tip="Compare A and B, best windows, annual." />
+              </StackPanel>
+            </StackPanel>
+          </Border>
 
           <!-- what the import dropped or guessed: one line, whatever the section -->
-          <TextBlock x:Name="ImportNoteText" Grid.Row="1" Classes="rowSub" TextWrapping="Wrap" IsVisible="False" Margin="18,10,14,0" Text="" />
+          <TextBlock x:Name="ImportNoteText" Grid.Row="1" Classes="rowSub" TextWrapping="Wrap" IsVisible="False" Margin="14,10,12,0" Text="" />
 
           <ScrollViewer x:Name="PanelScroll" Grid.Row="2" HorizontalScrollBarVisibility="Disabled"
                         VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="18,12,14,14">
+            <StackPanel Margin="14,12,12,14">
 
               <!-- ============ View: still air, the slice, the environment (Expert adds display and probes below) ============ -->
               <StackPanel x:Name="ResultsPane" Spacing="18">
@@ -281,24 +524,14 @@
               <!-- ============ Rooms (the outliner) and Openings (the flat list): their own sections of the picker ============ -->
               <StackPanel x:Name="RoomsPane" Spacing="18" IsVisible="False">
                 <StackPanel Spacing="6">
-                  <!-- Add room: reads "Click inside a space · Esc" while armed (OnRoomAdd) -->
+                  <!-- header: the result's state on the left, the question the dots answer on the right. Add room sits on the command bar. -->
                   <Grid ColumnDefinitions="*,Auto" MinHeight="26">
-                    <TextBlock Classes="rowSub" Text="Ctrl+click rooms to merge them" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                    <Button x:Name="RoomAddButton" Grid.Column="1" Classes="tool small" Content="+ Add room" Click="OnRoomAdd"
-                            ToolTip.Tip="Click inside a space in the 3D view to make it a room: the walled-in air at that point, found by the same detection the importer uses. Wrongly detected or not wanted? Use × on its row, Delete in the inspector, or the Delete key." />
-                  </Grid>
-                  <!-- header: the result's state on the left, the question the dots answer on the right -->
-                  <Grid ColumnDefinitions="*,Auto" MinHeight="22">
                     <Border x:Name="RoomsStateTag" Classes="chip" IsVisible="False" HorizontalAlignment="Left"
                             ToolTip.Tip="Preview numbers: a fast, coarse run, good for direction. They firm up when the averaged pass lands.">
                       <TextBlock x:Name="RoomsStateText" Text="preview" />
                     </Border>
                     <ToggleButton x:Name="AchIntentToggle" Grid.Column="1" Classes="link" Content="judged for air quality ▾"
                                   Click="OnAchIntent" />
-                  </Grid>
-                  <!-- column header: the same columns as the rows below (values live in the inspector) -->
-                  <Grid ColumnDefinitions="14,*,20" Margin="9,0,9,0">
-                    <TextBlock Grid.Column="1" Classes="colHead" Text="ROOM" TextAlignment="Left" Margin="12,0,0,0" />
                   </Grid>
                   <!-- One flat list: a room row, then (while expanded) its openings as child rows. The template is picked by type. -->
                   <ItemsControl x:Name="RoomList" Background="Transparent" PointerPressed="OnRoomListPress">
@@ -373,21 +606,19 @@
                       </ItemsControl.ItemTemplate>
                     </ItemsControl>
                   </StackPanel>
-                  <TextBlock x:Name="RoomsNote" Classes="rowSub" TextWrapping="Wrap" Text="Press Run to see the rooms." />
+                  <TextBlock x:Name="RoomsNote" Classes="rowSub" TextWrapping="Wrap" Text="Run to see each room's fresh air." />
+                  <TextBlock Classes="rowSub" Text="Click a room to see it in 3D · double-click to rename · Ctrl+click two rooms to merge them" TextWrapping="Wrap" />
                 </StackPanel>
               </StackPanel>
 
               <StackPanel x:Name="OpeningsPane" Spacing="18" IsVisible="False">
                 <StackPanel Spacing="6">
-                  <!-- header: the result's state on the left, Add on the right -->
+                  <!-- header: the result's state. Add opening sits on the command bar. -->
                   <Grid ColumnDefinitions="*,Auto" MinHeight="26">
                     <Border x:Name="OpeningsStateTag" Classes="chip" IsVisible="False" HorizontalAlignment="Left"
                             ToolTip.Tip="Preview numbers: a fast, coarse run, good for direction. They firm up when the averaged pass lands.">
                       <TextBlock x:Name="OpeningsStateText" Text="preview" />
                     </Border>
-                    <!-- Add opening: reads "Click a wall · Esc" while armed (OnOpeningAdd) -->
-                    <Button x:Name="OpeningAddButton" Grid.Column="1" Classes="tool small" Content="+ Add opening" Click="OnOpeningAdd"
-                            ToolTip.Tip="Click a wall in the 3D view to put a window there (1.2 x 1.2 m, sill 0.9 m). Wrongly detected? Use × on its row, Delete in the inspector, or the Delete key." />
                   </Grid>
                   <Grid ColumnDefinitions="*,Auto" Margin="9,0,9,0">
                     <TextBlock Classes="colHead" Text="OPENING" TextAlignment="Left" Margin="30,0,0,0" />
@@ -466,7 +697,7 @@
                   <!-- the palette: one click on a tile, one click in the viewport. Tiles are built in InitDevices. -->
                   <UniformGrid x:Name="DevicePalette" Columns="4" />
                   <TextBlock x:Name="DevicesHint" Classes="rowSub" TextWrapping="Wrap" Text=""
-                             Foreground="{StaticResource Warning}" IsVisible="False" />
+                             Foreground="{DynamicResource Warning}" IsVisible="False" />
                   <ItemsControl x:Name="DeviceList">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate x:DataType="app:DeviceRow">
@@ -554,12 +785,6 @@
                 <StackPanel x:Name="ViewPane" Spacing="18" IsVisible="False">
                   <StackPanel Spacing="8">
                     <TextBlock Classes="section" Text="DISPLAY" />
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                      <ToggleButton x:Name="GhostToggle" Classes="tool small" Content="Ghost" Click="OnGhostClick"
-                                    ToolTip.Tip="G: translucent walls. X cycles solid, ghost and X-ray." />
-                      <ToggleButton x:Name="ParticleToggle" Classes="tool small" Content="Particles" Click="OnParticlesClick"
-                                    ToolTip.Tip="P: the moving particles." />
-                    </StackPanel>
                     <Grid ColumnDefinitions="64,*,Auto">
                       <TextBlock Classes="unit" Text="playback" VerticalAlignment="Center" />
                       <Slider x:Name="SpeedSlider" Grid.Column="1" Minimum="2" Maximum="32" Value="16"
@@ -654,7 +879,7 @@
                         <Button x:Name="SweepCancelButton" Classes="tool small" Content="Cancel" Click="OnJobCancel"
                                 IsVisible="False" />
                         <ProgressBar x:Name="SweepProgress" Width="86" Height="3" IsVisible="False" Minimum="0" Maximum="100"
-                                     Foreground="{StaticResource Accent}" Background="#1C2836" VerticalAlignment="Center" />
+                                     Foreground="{DynamicResource Accent}" Background="{DynamicResource Track}" VerticalAlignment="Center" />
                       </StackPanel>
                     </StackPanel>
                     <TextBlock x:Name="SweepHint" Classes="rowSub" TextWrapping="Wrap"
@@ -664,7 +889,7 @@
                         <DataTemplate x:DataType="app:SweepRow">
                           <Border Classes="row" PointerPressed="OnSweepRow" Tag="{Binding Index}" ToolTip.Tip="{Binding Tip}">
                             <Grid ColumnDefinitions="Auto,*,Auto">
-                              <TextBlock Text="{Binding Chips}" FontSize="12.5" Foreground="#4DB8FF" VerticalAlignment="Center" />
+                              <TextBlock Text="{Binding Chips}" FontSize="12.5" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" />
                               <StackPanel Grid.Column="1" Margin="7,0,0,0">
                                 <TextBlock Text="{Binding Name}" Classes="rowName" />
                                 <TextBlock Text="{Binding Sub}" Classes="rowSub" />
@@ -689,7 +914,7 @@
                     <TextBlock x:Name="EpwText" Classes="rowSub" TextWrapping="Wrap" Text="No weather file loaded." />
                     <Canvas x:Name="RoseCanvas" Width="132" Height="132" IsVisible="False" HorizontalAlignment="Center" />
                     <ProgressBar x:Name="AnnualProgress" Height="3" IsVisible="False" Minimum="0" Maximum="100"
-                                 Foreground="{StaticResource Accent}" Background="#1C2836" />
+                                 Foreground="{DynamicResource Accent}" Background="{DynamicResource Track}" />
                     <ItemsControl x:Name="AnnualList">
                       <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="app:AnnualRow">
@@ -723,16 +948,16 @@
                   <Grid ColumnDefinitions="*,Auto,Auto,Auto">
                     <StackPanel VerticalAlignment="Center">
                       <StackPanel Orientation="Horizontal" Spacing="7">
-                        <Border Width="8" Height="8" CornerRadius="2" Background="#E08CFF" VerticalAlignment="Center" />
+                        <Border Width="8" Height="8" CornerRadius="2" Background="{DynamicResource SelectedStroke}" VerticalAlignment="Center" />
                         <TextBlock x:Name="RoomInspTitle" Classes="rowName" FontSize="13" FontWeight="SemiBold" Text="" />
                       </StackPanel>
                       <TextBlock x:Name="RoomInspSub" Classes="rowSub" Text="" />
                     </StackPanel>
-                    <ToggleButton x:Name="InspIsolateButton" Grid.Column="1" Classes="tool small" Content="Isolate" Click="OnIsolateRow" Margin="0,0,6,0"
+                    <ToggleButton x:Name="InspIsolateButton" Grid.Column="1" Classes="ghost small" Content="Isolate" Click="OnIsolateRow" Margin="0,0,6,0"
                                   ToolTip.Tip="Show only this room: the others disappear and the air in this one keeps moving exactly as before. View only, nothing is recomputed. Esc or the chip on the viewport header shows all rooms again." />
-                    <Button x:Name="InspFrameButton" Grid.Column="2" Classes="tool small" Content="Frame" Click="OnFrameSelection" Margin="0,0,6,0"
+                    <Button x:Name="InspFrameButton" Grid.Column="2" Classes="ghost small" Content="Frame" Click="OnFrameSelection" Margin="0,0,6,0"
                             ToolTip.Tip="F: put the camera on this room." />
-                    <Button x:Name="RoomInspDeleteButton" Grid.Column="3" Classes="tool small danger" Content="Delete" Click="OnRoomDelete"
+                    <Button x:Name="RoomInspDeleteButton" Grid.Column="3" Classes="ghost small danger" Content="Delete" Click="OnRoomDelete"
                             ToolTip.Tip="Delete this room: it stops being reported and its air becomes unassigned indoor air; its openings stay. Undo in the status strip until the next edit." />
                   </Grid>
                   <!-- three figures: the list's two scan columns plus the air age, with units -->
@@ -743,7 +968,7 @@
                           <TextBlock x:Name="RoomInspAch" Classes="figure" Text="—" />
                           <TextBlock x:Name="RoomInspAchNote" Classes="figureUnit" Text="" />
                         </StackPanel>
-                        <TextBlock Classes="colHead" Text="FRESH-AIR ACH" TextAlignment="Left" />
+                        <TextBlock Classes="colHead" Text="FRESH-AIR ACH" TextAlignment="Left" LetterSpacing="0.5" />
                       </StackPanel>
                     </Border>
                     <Border Grid.Column="1" Classes="row figure">
@@ -752,7 +977,7 @@
                           <TextBlock x:Name="RoomInspStill" Classes="figure" Text="—" />
                           <TextBlock Classes="figureUnit" Text="%" />
                         </StackPanel>
-                        <TextBlock Classes="colHead" Text="STILL" TextAlignment="Left" />
+                        <TextBlock Classes="colHead" Text="STILL" TextAlignment="Left" LetterSpacing="0.5" />
                       </StackPanel>
                     </Border>
                     <Border Grid.Column="2" Classes="row figure">
@@ -761,7 +986,7 @@
                           <TextBlock x:Name="RoomInspAge" Classes="figure" Text="—" />
                           <TextBlock x:Name="RoomInspAgeUnit" Classes="figureUnit" Text="" />
                         </StackPanel>
-                        <TextBlock Classes="colHead" Text="AIR AGE" TextAlignment="Left" />
+                        <TextBlock Classes="colHead" Text="AIR AGE" TextAlignment="Left" LetterSpacing="0.5" />
                       </StackPanel>
                     </Border>
                   </Grid>
@@ -798,14 +1023,14 @@
                   <Grid ColumnDefinitions="*,Auto,Auto">
                     <StackPanel VerticalAlignment="Center">
                       <StackPanel Orientation="Horizontal" Spacing="7">
-                        <Border Width="8" Height="8" CornerRadius="2" Background="#E08CFF" VerticalAlignment="Center" />
+                        <Border Width="8" Height="8" CornerRadius="2" Background="{DynamicResource SelectedStroke}" VerticalAlignment="Center" />
                         <TextBlock x:Name="OpeningInspTitle" Classes="rowName" FontSize="13" FontWeight="SemiBold" Text="" />
                       </StackPanel>
                       <TextBlock x:Name="OpeningInspSub" Classes="rowSub" Text="" />
                     </StackPanel>
-                    <Button x:Name="InspOpeningFrameButton" Grid.Column="1" Classes="tool small" Content="Frame" Click="OnFrameSelection" Margin="0,0,6,0"
+                    <Button x:Name="InspOpeningFrameButton" Grid.Column="1" Classes="ghost small" Content="Frame" Click="OnFrameSelection" Margin="0,0,6,0"
                             ToolTip.Tip="F: put the camera on this opening." />
-                    <Button x:Name="InspDeleteButton" Grid.Column="2" Classes="tool small danger" Content="Delete" Click="OnOpeningDelete"
+                    <Button x:Name="InspDeleteButton" Grid.Column="2" Classes="ghost small danger" Content="Delete" Click="OnOpeningDelete"
                             ToolTip.Tip="Delete this opening: its hole acts as wall. Undo in the status strip until the next edit." />
                   </Grid>
                   <!-- size: editable for a hand-added opening, read-only for a detected one (disabled while locked, UiTable) -->
@@ -867,43 +1092,11 @@
             </ScrollViewer>
           </Border>
 
-          <!-- one trust line, pinned under the panel in both modes -->
-          <Border Grid.Row="4" BorderThickness="0,1,0,0" BorderBrush="{StaticResource Divider}" Padding="18,10,14,12">
+          <!-- the footer: which result the numbers are, how far the averaged pass has got, and the trust line (both modes) -->
+          <Border Grid.Row="4" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Divider}" Padding="14,10,12,12">
             <StackPanel Spacing="6">
-              <!-- Which recipe the Accurate pass runs. Standard is the steady-wind answer; High adds gusts and supply turbulence
-                   and so reports ranges. The time budget and the fine box belong to High only. Disabled while locked (UiTable). -->
-              <StackPanel x:Name="AccurateControls" Spacing="5" Margin="0,0,0,6">
-                <StackPanel Orientation="Horizontal" Spacing="4">
-                  <ToggleButton x:Name="AccurateStandardToggle" Classes="tool small seg" Content="Standard" IsChecked="True"
-                                Click="OnAccurateMode" Margin="0"
-                                ToolTip.Tip="Standard: a perfectly steady wind and smooth supplies, up to 10 minutes (large models end time-limited). Rooms ventilated mainly by gusts (one opening, or windows only on walls parallel to the wind) read low: compare with High." />
-                  <ToggleButton x:Name="AccurateHighToggle" Classes="tool small seg" Content="High" Click="OnAccurateMode"
-                                ToolTip.Tip="High (gusty wind): gusty wind (EN 1991-1-4 turbulence) and turbulent supplies, averaged for the time budget you pick. The numbers move batch to batch, so each room shows a ± range; a gusty answer can sit outside Standard's range. Not more accurate than Standard: it models a different wind. The fine box and memory plan assume the Compact wind domain (headless High runs use Compact)." />
-                  <ToggleButton x:Name="AccurateUltraToggle" Classes="tool small seg" Content="Ultra" Click="OnAccurateMode" ToolTip.ShowOnDisabled="True"
-                                ToolTip.Tip="Ultra: the finest grid your GPU fits, as fine as the narrowest open window or door needs (16 cells across), run for hours (6 to 24 h, saved as it goes so it can resume). Wind only, no thermal. Accuracy not separately validated. A confirm dialog shows the estimate first." />
-                  <StackPanel x:Name="UltraCapGroup" Orientation="Horizontal" Spacing="4" IsVisible="False" Margin="6,0,0,0"
-                              ToolTip.Tip="Time limit of the Ultra run, hours. It stops earlier when every room has settled. Applies to the next Ultra run and is remembered.">
-                    <ToggleButton x:Name="UCap6Toggle" Classes="tool small seg" Content="6" Tag="6" Click="OnUltraCap" Margin="0" />
-                    <ToggleButton x:Name="UCap12Toggle" Classes="tool small seg" Content="12" Tag="12" Click="OnUltraCap" />
-                    <ToggleButton x:Name="UCap20Toggle" Classes="tool small seg" Content="20" Tag="20" Click="OnUltraCap" />
-                    <ToggleButton x:Name="UCap24Toggle" Classes="tool small seg" Content="24" Tag="24" Click="OnUltraCap" />
-                    <TextBlock Classes="unit" Text="h" VerticalAlignment="Center" Margin="2,0,0,0" />
-                  </StackPanel>
-                  <StackPanel x:Name="HighCapGroup" Orientation="Horizontal" Spacing="4" IsVisible="False" Margin="6,0,0,0"
-                              ToolTip.Tip="Time budget of the High pass, minutes of stepping. It stops at the budget whatever the ranges are, and says so. Applies to the next pass and is remembered.">
-                    <ToggleButton x:Name="Cap5Toggle" Classes="tool small seg" Content="5" Tag="5" Click="OnAccurateCap" Margin="0" />
-                    <ToggleButton x:Name="Cap10Toggle" Classes="tool small seg" Content="10" Tag="10" Click="OnAccurateCap" />
-                    <ToggleButton x:Name="Cap20Toggle" Classes="tool small seg" Content="20" Tag="20" Click="OnAccurateCap" />
-                    <ToggleButton x:Name="Cap30Toggle" Classes="tool small seg" Content="30" Tag="30" Click="OnAccurateCap" />
-                    <TextBlock Classes="unit" Text="min" VerticalAlignment="Center" Margin="2,0,0,0" />
-                  </StackPanel>
-                </StackPanel>
-                <ToggleButton x:Name="FocusBoxToggle" Classes="tool small" Content="Fine box on the selected room" Click="OnFocusBox"
-                              IsVisible="False" HorizontalAlignment="Left" ToolTip.ShowOnDisabled="True"
-                              ToolTip.Tip="High only: a 2:1 finer grid around one room, the room selected or isolated when you switch this on (the label names it). Isothermal passes only; a room that does not fit the graphics memory runs without the box and the pass line says so. Switch off and on again to move it to another room." />
-                <TextBlock x:Name="AccurateModeNote" Classes="rowSub" TextWrapping="Wrap"
-                           Text="Standard: steady wind, up to 10 min. High (gusty wind): gusts and supply turbulence; numbers vary, shown with ranges." />
-              </StackPanel>
+              <TextBlock x:Name="AccurateModeNote" Classes="rowSub" TextWrapping="Wrap" IsVisible="False"
+                         Text="Standard: steady wind, up to 10 min. High (gusty wind): gusts and supply turbulence; numbers vary, shown with ranges." />
               <!-- Preview, then Accurate: which result the numbers are, and how far the Accurate pass has got -->
               <StackPanel x:Name="PassPanel" Spacing="6" IsVisible="False" Margin="0,0,0,4">
                 <Grid ColumnDefinitions="Auto,*">
@@ -913,7 +1106,7 @@
                   <TextBlock x:Name="PassText" Grid.Column="1" Classes="rowSub" Margin="8,0,0,0" VerticalAlignment="Center"
                              TextWrapping="Wrap" Text="" />
                 </Grid>
-                <Border x:Name="PassTrack" Height="3" CornerRadius="1.5" Background="#1C2836" ClipToBounds="True">
+                <Border x:Name="PassTrack" Height="3" CornerRadius="1.5" Background="{DynamicResource Track}" ClipToBounds="True">
                   <Border x:Name="PassFill" Classes="passFill" CornerRadius="1.5"
                           RenderTransformOrigin="0%,50%" RenderTransform="scaleX(0)">
                     <Border.Transitions>
@@ -926,7 +1119,7 @@
               </StackPanel>
               <Grid ColumnDefinitions="Auto,*,Auto">
                 <Border x:Name="TrustChip" Width="7" Height="7" CornerRadius="3.5" VerticalAlignment="Center"
-                        Background="{StaticResource TextMuted}" />
+                        Background="{DynamicResource TextMuted}" />
                 <TextBlock x:Name="TrustHead" Grid.Column="1" Classes="rowName" Margin="9,0,0,0" Text="Not solved yet"
                            VerticalAlignment="Center" />
                 <ToggleButton x:Name="NotesToggle" Grid.Column="2" Classes="link" Content="" IsVisible="False"
@@ -938,10 +1131,9 @@
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="x:String">
                       <Grid ColumnDefinitions="14,*" Margin="0,2,0,3">
-                        <Border Width="4" Height="4" CornerRadius="2" Background="#E0B162" VerticalAlignment="Top"
+                        <Border Width="4" Height="4" CornerRadius="2" Background="{DynamicResource WarmFg}" VerticalAlignment="Top"
                                 Margin="1,6,0,0" HorizontalAlignment="Left" />
-                        <TextBlock Grid.Column="1" Text="{Binding}" Classes="rowSub" TextWrapping="Wrap"
-                                   Foreground="#B8C3D3" />
+                        <TextBlock Grid.Column="1" Text="{Binding}" Classes="rowSub" TextWrapping="Wrap" />
                       </Grid>
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
@@ -954,31 +1146,45 @@
     </Grid>
 
     <!-- settings popover, both modes: its own top-level window, so it can float over the 3D view -->
-    <Popup x:Name="SettingsPopup" Grid.Row="1" PlacementTarget="{Binding #GearButton}"
+    <Popup x:Name="SettingsPopup" Grid.Row="2" PlacementTarget="{Binding #GearButton}"
            Placement="BottomEdgeAlignedRight" IsLightDismissEnabled="True" VerticalOffset="6">
-      <Border x:Name="SettingsCard" Width="316" Background="#101822" CornerRadius="10" Padding="18,14,18,16"
-              BorderThickness="1" BorderBrush="#223044">
+      <Border x:Name="SettingsCard" Classes="card" Width="320" Padding="16,14,16,16">
         <StackPanel Spacing="9">
           <TextBlock Classes="section" Text="SETTINGS" />
 
-          <Grid ColumnDefinitions="72,*,Auto" ToolTip.Tip="How much of the GPU the solver may keep busy. Lower is slower but leaves the computer usable; the solver sleeps between short bursts to hold this share, and the viewport drops to 30 fps while solving (5 fps when WindFlow is in the background).">
+          <!-- Dark (default) or Light chrome; the 3D view stays dark in both -->
+          <Grid ColumnDefinitions="88,Auto" ToolTip.Tip="Dark or light panels around the same dark 3D view. Remembered.">
+            <TextBlock Classes="unit" Text="Appearance" VerticalAlignment="Center" />
+            <Border Grid.Column="1" Classes="segment small">
+              <StackPanel>
+                <ToggleButton x:Name="ThemeDarkToggle" Classes="seg small" Tag="Dark" Click="OnTheme" IsChecked="True">
+                  <StackPanel Orientation="Horizontal" Spacing="6"><app:Icon Classes="s" Data="{StaticResource IconMoon}" /><TextBlock Text="Dark" VerticalAlignment="Center" /></StackPanel>
+                </ToggleButton>
+                <ToggleButton x:Name="ThemeLightToggle" Classes="seg small" Tag="Light" Click="OnTheme">
+                  <StackPanel Orientation="Horizontal" Spacing="6"><app:Icon Classes="s" Data="{StaticResource IconSun}" /><TextBlock Text="Light" VerticalAlignment="Center" /></StackPanel>
+                </ToggleButton>
+              </StackPanel>
+            </Border>
+          </Grid>
+
+          <Grid ColumnDefinitions="88,*,Auto" ToolTip.Tip="How much of the GPU the solver may keep busy. Lower is slower but leaves the computer usable; the solver sleeps between short bursts to hold this share, and the viewport drops to 30 fps while solving (5 fps when WindFlow is in the background).">
             <TextBlock Classes="unit" Text="GPU use" VerticalAlignment="Center" />
             <Slider x:Name="GpuSlider" Grid.Column="1" Minimum="25" Maximum="100" Value="60"
                     TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="OnGpuUse" VerticalAlignment="Center" />
             <TextBlock x:Name="GpuText" Grid.Column="2" Classes="unit" Text="60 %" Width="38" TextAlignment="Right"
                        VerticalAlignment="Center" />
           </Grid>
-          <TextBlock x:Name="GpuNote" Classes="rowSub" TextWrapping="Wrap" Text="applies while solving" Margin="72,-6,0,0" />
+          <TextBlock x:Name="GpuNote" Classes="rowSub" TextWrapping="Wrap" Text="applies while solving" Margin="88,-6,0,0" />
 
-          <Grid x:Name="TierRow" ColumnDefinitions="72,*" RowDefinitions="Auto,Auto">
+          <Grid x:Name="TierRow" ColumnDefinitions="88,*" RowDefinitions="Auto,Auto">
             <TextBlock Classes="unit" Text="Performance" VerticalAlignment="Center" />
-            <TextBlock x:Name="TierText" Grid.Column="1" Classes="rowName" FontSize="11.5" Text="measuring…"
+            <TextBlock x:Name="TierText" Grid.Column="1" Classes="rowName" FontSize="12" Text="measuring…"
                        TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
             <TextBlock x:Name="TierNote" Grid.Row="1" Grid.Column="1" Classes="rowSub" TextWrapping="Wrap"
                        Text="a two-second solver run picks the grid and particle budget" />
           </Grid>
 
-          <Grid ColumnDefinitions="72,Auto,Auto,*" RowDefinitions="Auto,Auto">
+          <Grid ColumnDefinitions="88,Auto,Auto,*" RowDefinitions="Auto,Auto">
             <TextBlock Classes="unit" Text="Particles" VerticalAlignment="Center" />
             <TextBox x:Name="ParticleBox" Grid.Column="1" Classes="field" Width="76" Text="Auto"
                      KeyDown="OnParticleKey" LostFocus="OnParticleLost"
@@ -989,10 +1195,10 @@
                        TextWrapping="Wrap" Text="your GPU: measuring…" />
           </Grid>
 
-          <Grid ColumnDefinitions="72,*" RowDefinitions="Auto,Auto"
+          <Grid ColumnDefinitions="88,*" RowDefinitions="Auto,Auto"
                 ToolTip.Tip="The finer whole-building grid the averaged pass runs on once Preview has settled. Auto takes it from the performance tier; it is always clamped to what the graphics card's memory holds next to the Preview grid.">
-            <TextBlock Classes="unit" Text="Averaged-pass grid" VerticalAlignment="Center" TextWrapping="Wrap" />
-            <TextBlock x:Name="AccurateText" Grid.Column="1" Classes="rowName" FontSize="11.5" Text="auto · measuring…"
+            <TextBlock Classes="unit" Text="Averaged grid" VerticalAlignment="Center" TextWrapping="Wrap" />
+            <TextBlock x:Name="AccurateText" Grid.Column="1" Classes="rowName" FontSize="12" Text="auto · measuring…"
                        VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
             <StackPanel x:Name="AccurateEditRow" Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="6" Margin="0,5,0,0">
               <TextBox x:Name="AccurateBox" Classes="field" Width="76" Text="Auto"
@@ -1002,10 +1208,9 @@
             </StackPanel>
           </Grid>
 
-          <Border Height="1" Background="{StaticResource Divider}" Margin="0,2" />
+          <Border Height="1" Background="{DynamicResource Divider}" Margin="0,2" />
           <StackPanel x:Name="BoxV1Row">
             <CheckBox x:Name="BoxV1Toggle" Click="OnBoxV1" Content="Box is the whole domain (v1)"
-                      FontSize="12" Foreground="{StaticResource Text}"
                       ToolTip.Tip="Off (default): the simulation box is a fine grid at half the cell size, fed by the whole-building run, so its faces carry the real building flow. On: the old v1 box, solved on its own with open faces, which misreads any face that cuts through the building. For comparison only." />
           </StackPanel>
           <StackPanel x:Name="OpeningModelRow">
@@ -1015,25 +1220,23 @@
           </StackPanel>
           <StackPanel x:Name="WallModelRow">
             <CheckBox x:Name="WallModelToggle" Click="OnWallModel" Content="Wall model (experimental, wind-only)"
-                      FontSize="12" Foreground="{StaticResource Text}"
                       ToolTip.Tip="Off (default): plain no-slip walls. On: a Werner-Wengle wall function sets the near-wall velocity on every solid face, which the coarse grid cannot resolve on its own. Experimental and isothermal only: greyed out while Thermal is on. On the measured test rooms it gave mixed results that change with the grid. Restarts the solve." />
           </StackPanel>
           <StackPanel x:Name="DomainModeRow">
             <CheckBox x:Name="DomainModeToggle" Click="OnDomainMode" Content="Full wind domain (COST 732)"
-                      FontSize="12" Foreground="{StaticResource Text}"
                       ToolTip.Tip="Off (default): the compact wind domain, margins tied to the plan size; the building then blocks about 10 % of the wind section, above the 3 % guideline. On: margins of 5 building heights upwind, sideways and above and 10 downwind, enlarged until the blockage is at most 3 %, at the same cell size, so many more cells. Cut back, then Compact again, when graphics memory is short (a note says so). Sized for the wind direction: changing the direction rebuilds the grid. Opening sweeps and annual studies use it too. Restarts the solve." />
           </StackPanel>
           <Button x:Name="LogFolderButton" Classes="link" Content="Open log folder" Click="OnOpenLogFolder"
                   HorizontalAlignment="Left" Margin="0,2,0,0" />
 
-          <Border Height="1" Background="{StaticResource Divider}" Margin="0,2" />
+          <Border Height="1" Background="{DynamicResource Divider}" Margin="0,2" />
           <TextBlock Classes="section" Text="CONTACT" />
           <TextBlock Classes="rowSub" TextWrapping="Wrap" Text="Questions, ideas or a problem? Tell the creator." />
           <Button x:Name="ContactButton" Classes="tool small accent" Content="Contact the creator" Click="OnContact"
                   HorizontalAlignment="Left" Margin="0,2,0,6"
                   ToolTip.Tip="Opens the WindFlow page on GitHub where you can ask a question or report a problem (Issues)." />
           <TextBlock Classes="section" Text="ABOUT" />
-          <TextBlock x:Name="AboutVersionText" Classes="rowName" FontSize="11.5" Text="WindFlow" />
+          <TextBlock x:Name="AboutVersionText" Classes="rowName" FontSize="12" Text="WindFlow" />
           <TextBlock x:Name="AboutDisclaimerText" Classes="rowSub" TextWrapping="Wrap" Text="" />
           <TextBlock x:Name="AboutLicenceText" Classes="rowSub" TextWrapping="Wrap"
                      Text="Made by Bijay Karki. Free and open source under the MIT License." />
@@ -1045,7 +1248,7 @@
                   ToolTip.Tip="Opens WindFlow-Technical-Reference.pdf: the full method, the equations, the validation and the known limits." />
           <Button x:Name="TourButton" Classes="link" Content="Take the tour" Click="OnTakeTour"
                   HorizontalAlignment="Left" Margin="0,2,0,0"
-                  ToolTip.Tip="Ten short steps that point out where things are. It also shows once, on first launch." />
+                  ToolTip.Tip="Twelve short steps that point out where things are. It also shows once, on first launch." />
           <Button x:Name="SourceButton" Classes="link" Content="Licence, source code and third-party notices (GitHub)" Click="OnOpenSource"
                   HorizontalAlignment="Left" Margin="0,2,0,0"
                   ToolTip.Tip="Opens github.com/Bijaykars/Windflow: LICENSE.txt, THIRD-PARTY-NOTICES.txt and the source." />
@@ -1055,35 +1258,32 @@
 
     <!-- The guided tour (Tour.cs). A popup is its own top-level window, so the dim and the card float above the native
          viewport; its child, the TourOverlay, is built in code and sized to the window. -->
-    <Popup x:Name="TourPopup" Grid.Row="1" Placement="AnchorAndGravity" PlacementAnchor="TopLeft" PlacementGravity="BottomRight"
+    <Popup x:Name="TourPopup" Grid.Row="2" Placement="AnchorAndGravity" PlacementAnchor="TopLeft" PlacementGravity="BottomRight"
            PlacementConstraintAdjustment="None" IsLightDismissEnabled="False" />
 
-    <!-- status strip -->
-    <Border Grid.Row="2" Background="{StaticResource Panel}">
-      <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" Margin="20,0,18,0">
+    <!-- ============ status strip: the model, what the solver is doing, the keys, and two quiet facts (Expert) ============ -->
+    <Border Grid.Row="3" Background="{DynamicResource Panel}" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Divider}">
+      <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" Margin="14,0,12,0">
         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-          <TextBlock Classes="label" Text="MODEL" />
-          <TextBlock x:Name="ModelText" Text="-" FontSize="11.5" Foreground="{StaticResource Text}"
-                     VerticalAlignment="Center" />
-          <TextBlock x:Name="LiveLinkText" Text="" FontSize="11.5" Foreground="{StaticResource TextMuted}"
-                     VerticalAlignment="Center" IsVisible="False" />
+          <TextBlock Classes="label" Text="MODEL" FontSize="10" />
+          <TextBlock x:Name="ModelText" Text="-" Classes="status" Foreground="{DynamicResource Text}" />
+          <TextBlock x:Name="LiveLinkText" Text="" Classes="status" IsVisible="False" />
         </StackPanel>
         <ProgressBar x:Name="SolveProgress" Grid.Column="1" Width="120" Height="3" Margin="16,0,0,0"
-                     IsVisible="False" Minimum="0" Maximum="100"
-                     Foreground="{StaticResource Accent}" Background="#1C2836" VerticalAlignment="Center" />
+                     IsVisible="False" Minimum="0" Maximum="100" VerticalAlignment="Center" />
         <Grid Grid.Column="2" ColumnDefinitions="*,Auto,Auto" Margin="14,0">
-          <TextBlock x:Name="StatusText" VerticalAlignment="Center" FontSize="11.5"
-                     TextTrimming="CharacterEllipsis" Foreground="{StaticResource TextMuted}" />
+          <TextBlock x:Name="StatusText" Classes="status" TextTrimming="CharacterEllipsis" />
           <Button x:Name="StatusUndoButton" Grid.Column="1" Classes="link" Content="Undo" Click="OnOpeningUndo" IsVisible="False" Padding="2,0" Margin="8,0,0,0"
                   VerticalAlignment="Center" ToolTip.Tip="Put the deleted opening back. Gone with the next edit." />
           <!-- what the keys do right now: follows the selection and the placement mode (RefreshInspector) -->
-          <TextBlock x:Name="KeyHints" Grid.Column="2" VerticalAlignment="Center" FontSize="11" Margin="18,0,0,0"
-                     Foreground="{StaticResource TextMuted}" Text="" />
+          <TextBlock x:Name="KeyHints" Grid.Column="2" Classes="status" FontSize="11" Margin="18,0,0,0" Text="" />
         </Grid>
-        <TextBlock x:Name="GeometryText" Grid.Column="3" Margin="0,0,24,0" VerticalAlignment="Center"
-                   FontSize="11.5" Foreground="{StaticResource TextMuted}" />
-        <TextBlock x:Name="PerfText" Grid.Column="4" VerticalAlignment="Center" FontSize="11.5"
-                   Foreground="{StaticResource Text}" />
+        <Border Grid.Column="3" Classes="chip status" Margin="0,0,8,0" IsVisible="{Binding #GeometryText.IsVisible}">
+          <TextBlock x:Name="GeometryText" />
+        </Border>
+        <Border Grid.Column="4" Classes="chip status" IsVisible="{Binding #PerfText.IsVisible}">
+          <TextBlock x:Name="PerfText" />
+        </Border>
       </Grid>
     </Border>
   </Grid>
