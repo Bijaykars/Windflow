@@ -27,9 +27,9 @@ More detail: [docs/USING_THE_APP.md](docs/USING_THE_APP.md).
 
 ## Download / run
 
-There is no public download yet. For now, build it from source (see below).
+**[Download WindFlow for Windows](https://github.com/Bijaykars/Windflow/releases/latest)**: `WindFlow-win-Setup.exe` installs it (no admin rights needed); `WindFlow-win-Portable.zip` runs without installing. Windows may say "Windows protected your PC" because the installer is not signed yet: click **More info**, then **Run anyway**.
 
-<!-- TODO(owner): add the download link here once a release is published. -->
+Or build it from source: double-click `install.bat` in this folder. It installs the .NET 10 SDK if needed, builds WindFlow and adds shortcuts.
 
 When you want an installer, run `pack.ps1`. It builds one into `out/releases`. It needs the `vpk` tool: `dotnet tool install -g vpk`.
 
