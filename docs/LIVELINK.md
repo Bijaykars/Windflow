@@ -2,8 +2,7 @@
 
 A named pipe the WindFlow Revit add-in uses to keep the standalone WindFlow.App in sync with the
 active Revit document while the user is editing. The App side is `src/WindFlow.App/LiveLink.cs`
-(server) and `MainWindowLiveLink.cs` (applying messages); it is started by Advanced → Settings → "Live link
-(Revit)" or `--livelink`. `tools/livelink-fake-revit.ps1` is a client stand-in, `tools/livelink-fake-app.ps1`
+(server) and `MainWindowLiveLink.cs` (applying messages); it is started with `--livelink`. `tools/livelink-fake-revit.ps1` is a client stand-in, `tools/livelink-fake-app.ps1`
 a server stand-in.
 
 ## Transport

@@ -15,25 +15,15 @@ public partial class MainWindow
 
     // ---------------------------------------------------------------- live link
 
-    void OnLiveLink(object? sender, RoutedEventArgs e)
-    {
-        settings.LiveLink = LiveLinkToggle.IsChecked == true;
-        settings.Save();
-        if (settings.LiveLink) StartLiveLink();
-        else StopLiveLink();
-    }
-
     void StartLiveLink()
     {
         liveLink ??= new LiveLinkServer { Apply = ApplyLiveLink };
         liveLink.Start();
-        LiveLinkToggle.IsChecked = true;
     }
 
     void StopLiveLink()
     {
         liveLink?.Stop();
-        LiveLinkToggle.IsChecked = false;
     }
 
     /// <summary>UI thread. A model goes through the same ShowModel a file open uses; an opening through the

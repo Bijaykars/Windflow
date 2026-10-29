@@ -106,7 +106,7 @@ public partial class MainWindow : Window
         SettingsPopup.Closed += (_, _) => settingsClosedAt = DateTime.UtcNow;
         var appVersion = typeof(MainWindow).Assembly.GetName().Version;
         AboutVersionText.Text = $"WindFlow {(appVersion != null ? $"{appVersion.Major}.{appVersion.Minor}.{appVersion.Build}" : "")}".TrimEnd();
-        AboutDisclaimerText.Text = WindFlow.Report.Disclaimer.Text + "\n\n" + WindFlow.Report.Disclaimer.ViscosityFloor + "\n\n" + WindFlow.Report.Disclaimer.KnownLimits;      // S5-05: one wording for the app, the README and the PDF footer; P11-01: the viscosity floor
+        AboutDisclaimerText.Text = WindFlow.Report.Disclaimer.Text;      // S5-05: one wording for the app, the README and the PDF footer; the floor and the limits are in the two PDFs
         StartupTier.Begin().ContinueWith(t =>
         {
             if (t.IsCompletedSuccessfully) Dispatcher.UIThread.Post(() => ApplyTier(t.Result));
@@ -134,19 +134,14 @@ public partial class MainWindow : Window
         FitToScreen();
         if (TryGetPlatformHandle() is { } handle) Win32.UseDarkTitleBar(handle.Handle);
         ApplyMode(settings.Advanced);
-        ReopenLastToggle.IsChecked = settings.ReopenLast;
         InitGovernor();
         InitParticleSetting();
         InitAccurateSetting();
         InitAccurateControls();
-        if (settings.LiveLink || Options.LiveLink) StartLiveLink();
+        if (Options.LiveLink) StartLiveLink();
         BoxV1Toggle.IsChecked = Options.BoxV1;       // default off: the box nests in the whole-building run
         if (!string.IsNullOrEmpty(Options.ModelPath)) Load(Options.ModelPath);
         else if (Options.Empty) ShowEmpty();
-        else if (settings.ReopenLast && settings.LastModel.Length > 0 && File.Exists(settings.LastModel) &&
-                 Options.BenchSeconds <= 0 && string.IsNullOrEmpty(Options.Shot) &&
-                 string.IsNullOrEmpty(Options.ReportPath) && Options.TurntablePath == null)
-            Load(settings.LastModel);
         else if (Options.BenchSeconds > 0 || !string.IsNullOrEmpty(Options.Shot) ||
                  Options.TurntablePath != null || !string.IsNullOrEmpty(Options.ReportPath))
             ShowModel(SampleBuilding.Build());
@@ -1183,17 +1178,6 @@ public partial class MainWindow : Window
         RefreshPanel();
     }
 
-    /// <summary>Off by default: a fresh launch lands on the empty state rather than a model the user may
-    /// have finished with. The path itself is always remembered.</summary>
-    void OnReopenLast(object? sender, RoutedEventArgs e)
-    {
-        settings.ReopenLast = ReopenLastToggle.IsChecked == true;
-        settings.Save();
-        StatusText.Text = settings.ReopenLast
-            ? $"WindFlow will reopen {(settings.LastModel.Length > 0 ? Path.GetFileName(settings.LastModel) : "the last model")} next time"
-            : "WindFlow will start on the empty state next time";
-    }
-
     // ---------------------------------------------------------------- video export
 
     async void OnExportTurntable(object? sender, RoutedEventArgs e)
@@ -1789,12 +1773,6 @@ public partial class MainWindow : Window
     string shotNote = "";
     static readonly TimeSpan LogPathShown = TimeSpan.FromSeconds(30);
 
-    /// <summary>THIRD-PARTY-NOTICES.txt sits next to the exe (WindFlow.App.csproj copies it; S5-01).</summary>
-    void OnOpenLicences(object? sender, RoutedEventArgs e) => OpenShipped("THIRD-PARTY-NOTICES.txt", "licence notices");
-
-    /// <summary>RA-40: LICENSE.txt (the repo's LICENSE, MIT) sits next to the exe as well (WindFlow.App.csproj copies it).</summary>
-    void OnOpenLicence(object? sender, RoutedEventArgs e) => OpenShipped("LICENSE.txt", "licence");
-
     void OnOpenMethod(object? sender, RoutedEventArgs e) => OpenShipped("how-windflow-works.pdf", "How WindFlow works PDF");
     void OnOpenTechRef(object? sender, RoutedEventArgs e) => OpenShipped("WindFlow-Technical-Reference.pdf", "Technical Reference PDF");
 
@@ -1804,6 +1782,14 @@ public partial class MainWindow : Window
     {
         try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(IssuesUrl) { UseShellExecute = true }); }
         catch (Exception ex) { Log.Error("could not open the contact page", ex); StatusText.Text = $"contact: {IssuesUrl}"; }
+    }
+
+    const string SourceUrl = "https://github.com/Bijaykars/Windflow";
+
+    void OnOpenSource(object? sender, RoutedEventArgs e)
+    {
+        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(SourceUrl) { UseShellExecute = true }); }
+        catch (Exception ex) { Log.Error("could not open the source page", ex); StatusText.Text = $"source: {SourceUrl}"; }
     }
 
     void OpenShipped(string file, string what)

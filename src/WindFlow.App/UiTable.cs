@@ -51,7 +51,6 @@ public static class UiTable
         new("SweepList", ExpertOnly: false, ChangesFlow: true),
         new("AnnualActions", ExpertOnly: false, ChangesFlow: true),
         new("RoseCanvas", ExpertOnly: false, ChangesFlow: true),
-        new("LiveLinkToggle", ExpertOnly: false, ChangesFlow: true),
         new("OpeningAddButton", ExpertOnly: false, ChangesFlow: true),
         new("RoomAddButton", ExpertOnly: false, ChangesFlow: true),
         new("RoomInspDeleteButton", ExpertOnly: false, ChangesFlow: true),  // inspector: delete the selected room
@@ -79,7 +78,7 @@ public static class UiTable
         // inspector (the selected room or opening)
         "InspIsolateButton", "InspFrameButton", "InspOpeningFrameButton", "InspDeleteButton", "InspWidth", "InspHeight", "InspSill", "InspType", "RoomInspDeleteButton", "MergeButton",
         // settings popover
-        "GpuSlider", "ParticleBox", "ParticleAutoButton", "ReopenLastToggle", "LiveLinkToggle", "LogFolderButton", "MethodButton", "TechRefButton", "TourButton", "ContactButton", "LicenceButton", "LicencesButton",
+        "GpuSlider", "ParticleBox", "ParticleAutoButton", "LogFolderButton", "MethodButton", "TechRefButton", "TourButton", "ContactButton", "SourceButton",
         // empty state (no model yet)
         "EmptySampleButton", "Open model…", "EmptyTourButton",
     ];
@@ -99,7 +98,7 @@ public static class UiTable
         "OpenModelButton", "SampleButton", "WindDirBox", "WindSpeedBox", "RunButton", "ThermalToggle", "IndoorBox", "HoldIndoorToggle",
         "OutdoorBox", "DevicePalette", "DeviceList", "BoxToggle", "BoxResetButton", "BoxGrowButton", "BoxV1Toggle", "HoldAButton",
         "HoldBButton", "CompareToggle", "SweepButton", "SweepList", "AnnualButton", "Load EPW...", "RoseCanvas",
-        "LiveLinkToggle", "AccurateBox", "OpeningModelToggle", "WallModelToggle", "DomainModeToggle",
+        "AccurateBox", "OpeningModelToggle", "WallModelToggle", "DomainModeToggle",
         "AccurateStandardToggle", "AccurateHighToggle", "AccurateUltraToggle", "FocusBoxToggle", "OpeningAddButton", "RoomAddButton", "RoomInspDeleteButton", "MergeButton",
         "InspDeleteButton", "InspWidth", "InspHeight", "InspSill", "InspType", "InspCd", "RoomInspPeople",
     ];

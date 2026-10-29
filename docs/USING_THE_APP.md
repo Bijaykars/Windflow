@@ -48,7 +48,7 @@ menu. What each mode shows is one table (`src/WindFlow.App/UiTable.cs`); `--self
 against `MainWindow.axaml`.
 
 **Settings** (gear, both modes): GPU use with its measured share, the performance tier, the particle count,
-reopen last model, live link, the log folder; Expert also shows "Box is the whole domain (v1)".
+the log folder; Expert also shows "Box is the whole domain (v1)".
 
 **Preview, then Accurate** (both modes, strip above the trust line): the live run is the **Preview** — a
 coarse grid (1.5M cells on the high tier), instant particles, good for direction; its room numbers are muted,

@@ -1003,12 +1003,6 @@
           </Grid>
 
           <Border Height="1" Background="{StaticResource Divider}" Margin="0,2" />
-          <CheckBox x:Name="ReopenLastToggle" Click="OnReopenLast" Content="Reopen last model"
-                    FontSize="12" Foreground="{StaticResource Text}"
-                    ToolTip.Tip="Off by default: WindFlow opens on the empty state so a stale model never looks like a fresh run." />
-          <CheckBox x:Name="LiveLinkToggle" Click="OnLiveLink" Content="Live link (Revit)"
-                    FontSize="12" Foreground="{StaticResource Text}"
-                    ToolTip.Tip="Listens on the WindFlow.LiveLink named pipe for the WindFlow Revit add-in: the model follows the Revit document while you edit it, and picking a room, opening or device here selects it in Revit." />
           <StackPanel x:Name="BoxV1Row">
             <CheckBox x:Name="BoxV1Toggle" Click="OnBoxV1" Content="Box is the whole domain (v1)"
                       FontSize="12" Foreground="{StaticResource Text}"
@@ -1033,14 +1027,16 @@
                   HorizontalAlignment="Left" Margin="0,2,0,0" />
 
           <Border Height="1" Background="{StaticResource Divider}" Margin="0,2" />
-          <TextBlock Classes="section" Text="ABOUT / LICENCES" />
+          <TextBlock Classes="section" Text="CONTACT" />
+          <TextBlock Classes="rowSub" TextWrapping="Wrap" Text="Questions, ideas or a problem? Tell the creator." />
+          <Button x:Name="ContactButton" Classes="tool small accent" Content="Contact the creator" Click="OnContact"
+                  HorizontalAlignment="Left" Margin="0,2,0,6"
+                  ToolTip.Tip="Opens the WindFlow page on GitHub where you can ask a question or report a problem (Issues)." />
+          <TextBlock Classes="section" Text="ABOUT" />
           <TextBlock x:Name="AboutVersionText" Classes="rowName" FontSize="11.5" Text="WindFlow" />
           <TextBlock x:Name="AboutDisclaimerText" Classes="rowSub" TextWrapping="Wrap" Text="" />
           <TextBlock x:Name="AboutLicenceText" Classes="rowSub" TextWrapping="Wrap"
-                     Text="Made by Bijay Karki. Free and open source under the MIT License (see LICENSE.txt). Source code: github.com/Bijaykars/Windflow" />
-          <Button x:Name="ContactButton" Classes="link" Content="Contact the creator / report a problem" Click="OnContact"
-                  HorizontalAlignment="Left" Margin="0,2,0,0"
-                  ToolTip.Tip="Opens the WindFlow page on GitHub where you can ask a question or report a problem (Issues)." />
+                     Text="Made by Bijay Karki. Free and open source under the MIT License." />
           <Button x:Name="MethodButton" Classes="link" Content="How WindFlow works (PDF)" Click="OnOpenMethod"
                   HorizontalAlignment="Left" Margin="0,2,0,0"
                   ToolTip.Tip="Opens how-windflow-works.pdf, the 2-page explainer of the method and its limits." />
@@ -1050,12 +1046,9 @@
           <Button x:Name="TourButton" Classes="link" Content="Take the tour" Click="OnTakeTour"
                   HorizontalAlignment="Left" Margin="0,2,0,0"
                   ToolTip.Tip="Ten short steps that point out where things are. It also shows once, on first launch." />
-          <Button x:Name="LicenceButton" Classes="link" Content="Open WindFlow licence (LICENSE.txt)" Click="OnOpenLicence"
+          <Button x:Name="SourceButton" Classes="link" Content="Licence, source code and third-party notices (GitHub)" Click="OnOpenSource"
                   HorizontalAlignment="Left" Margin="0,2,0,0"
-                  ToolTip.Tip="Opens LICENSE.txt, the MIT License WindFlow is released under." />
-          <Button x:Name="LicencesButton" Classes="link" Content="Open licence notices" Click="OnOpenLicences"
-                  HorizontalAlignment="Left" Margin="0,2,0,0"
-                  ToolTip.Tip="Opens THIRD-PARTY-NOTICES.txt, the licences of the libraries WindFlow ships with." />
+                  ToolTip.Tip="Opens github.com/Bijaykars/Windflow: LICENSE.txt, THIRD-PARTY-NOTICES.txt and the source." />
         </StackPanel>
       </Border>
     </Popup>
