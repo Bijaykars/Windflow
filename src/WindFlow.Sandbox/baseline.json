@@ -1,0 +1,1138 @@
+[
+  {
+    "id": "1",
+    "name": "voxel regression (west wall solid, above-roof air, ground layer solid)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "wallSolid=True aboveRoofAir=True groundSolid=True",
+    "values": {}
+  },
+  {
+    "id": "2a",
+    "name": "cross mass balance |Qw\u002BQe|\u003C=0.15*max",
+    "status": "PASS",
+    "pass": true,
+    "detail": "Qwest=-1.419 Qeast=1.449",
+    "values": {
+      "Qwest": -1.419,
+      "Qeast": 1.449
+    }
+  },
+  {
+    "id": "2b",
+    "name": "cross Qwest\u003C0, Qeast\u003E0",
+    "status": "PASS",
+    "pass": true,
+    "detail": "Qwest=-1.419 Qeast=1.449",
+    "values": {
+      "Qwest": -1.419,
+      "Qeast": 1.449
+    }
+  },
+  {
+    "id": "2c",
+    "name": "cross |Qeast| in [0.37,3.7]",
+    "status": "PASS",
+    "pass": true,
+    "detail": "|Qeast|=1.449",
+    "values": {}
+  },
+  {
+    "id": "2d",
+    "name": "cross room ACH\u003E5",
+    "status": "PASS",
+    "pass": true,
+    "detail": "ACH=47.05",
+    "values": {
+      "ACH": 47.05
+    }
+  },
+  {
+    "id": "2e",
+    "name": "cross open-air outline: Inflow ~ 0, InternalExchange \u003E 0 with a warning, real room unchanged",
+    "status": "PASS",
+    "pass": true,
+    "detail": "middle Inflow=0.0000 InternalExchange=2.751 m3/s warned=True | room Inflow=1.419 (re-analysed 1.419) InternalExchange=0.0000",
+    "values": {
+      "Inflow": 0,
+      "InternalExchange": 2.751,
+      "Inflow#2": 1.419,
+      "InternalExchange#2": 0
+    }
+  },
+  {
+    "id": "3",
+    "name": "closed room MeanSpeed\u003C0.15 and ACH\u003C1",
+    "status": "PASS",
+    "pass": true,
+    "detail": "MeanSpeed=0.000 ACH=0.00",
+    "values": {
+      "MeanSpeed": 0,
+      "ACH": 0
+    }
+  },
+  {
+    "id": "4",
+    "name": "single Inflow \u003C 0.5*cross Inflow",
+    "status": "PASS",
+    "pass": true,
+    "detail": "single=0.075 cross=1.419",
+    "values": {
+      "single": 0.075,
+      "cross": 1.419
+    }
+  },
+  {
+    "id": "5",
+    "name": "reversed |Qeast| within 20% of cross |Qeast|",
+    "status": "PASS",
+    "pass": true,
+    "detail": "reversed=1.647 cross=1.449",
+    "values": {
+      "reversed": 1.647,
+      "cross": 1.449
+    }
+  },
+  {
+    "id": "6",
+    "name": "diagonal runs, ACH\u003E0",
+    "status": "PASS",
+    "pass": true,
+    "detail": "ACH=38.71",
+    "values": {
+      "ACH": 38.71
+    }
+  },
+  {
+    "id": "7a",
+    "name": "tworooms door FlowRate\u003E0",
+    "status": "PASS",
+    "pass": true,
+    "detail": "door FlowRate=1.150",
+    "values": {
+      "FlowRate": 1.15
+    }
+  },
+  {
+    "id": "7b",
+    "name": "tworooms B Inflow \u003E 0.2*A Inflow",
+    "status": "PASS",
+    "pass": true,
+    "detail": "A=1.273 B=1.112",
+    "values": {
+      "A": 1.273,
+      "B": 1.112
+    }
+  },
+  {
+    "id": "8",
+    "name": "tworooms-doorclosed A \u0026 B ACH \u003C 30% of tworooms",
+    "status": "PASS",
+    "pass": true,
+    "detail": "A: 2.26 \u003C 0.3*86.59  B: 0.28 \u003C 0.3*75.64",
+    "values": {}
+  },
+  {
+    "id": "9",
+    "name": "JSON round-trip tworooms (counts, first vertex, opening Normal/IsOpen)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "counts=True firstVertex=True openings=True",
+    "values": {}
+  },
+  {
+    "id": "10",
+    "name": "orifice consistency |Qeast| in [0.6,1.8]*Q_orifice",
+    "status": "PASS",
+    "pass": true,
+    "detail": "dP=3.300 Pa  dCp=0.611  Q_orifice=1.457 m3/s  Qeast=1.449  ratio=0.995",
+    "values": {
+      "dP": 3.3,
+      "dCp": 0.611,
+      "Q_orifice": 1.457,
+      "Qeast": 1.449,
+      "ratio": 0.995
+    }
+  },
+  {
+    "id": "11",
+    "name": "twostorey pressure dCp in [0.5,1.6]",
+    "status": "PASS",
+    "pass": true,
+    "detail": "dCp=0.970  dP=5.239 Pa  pWest=3.790 Pa  pEast=-1.449 Pa",
+    "values": {
+      "dCp": 0.97,
+      "dP": 5.239,
+      "pWest": 3.79,
+      "pEast": -1.449
+    }
+  },
+  {
+    "id": "12a",
+    "name": "twostorey L1 |Qeast| in [0.6,1.8]*Q_orifice",
+    "status": "PASS",
+    "pass": true,
+    "detail": "Q_orifice=1.835 Qeast=2.062 ratio=1.124",
+    "values": {
+      "Q_orifice": 1.835,
+      "Qeast": 2.062,
+      "ratio": 1.124
+    }
+  },
+  {
+    "id": "12b",
+    "name": "twostorey L2 openings closed FlowRate=0",
+    "status": "PASS",
+    "pass": true,
+    "detail": "west-l2=0.000 east-l2=0.000",
+    "values": {
+      "l2": 0,
+      "l2#2": 0
+    }
+  },
+  {
+    "id": "12c",
+    "name": "twostorey L2 sealed (0 Air cells, room interior, centre z in (3.3,5.9))",
+    "status": "PASS",
+    "pass": true,
+    "detail": "airCount=0",
+    "values": {
+      "airCount": 0
+    }
+  },
+  {
+    "id": "13a",
+    "name": "supply room Inflow within 25% of 0.139",
+    "status": "PASS",
+    "pass": true,
+    "detail": "Inflow=0.1390",
+    "values": {
+      "Inflow": 0.139
+    }
+  },
+  {
+    "id": "13b",
+    "name": "supply sources within 15% of set",
+    "status": "PASS",
+    "pass": true,
+    "detail": "see source lines above",
+    "values": {}
+  },
+  {
+    "id": "13c",
+    "name": "supply room MeanSpeed\u003E0.005",
+    "status": "PASS",
+    "pass": true,
+    "detail": "MeanSpeed=0.0175",
+    "values": {
+      "MeanSpeed": 0.0175
+    }
+  },
+  {
+    "id": "14a",
+    "name": "fan-nowind measured flow within 20% of 0.2",
+    "status": "PASS",
+    "pass": true,
+    "detail": "measured=0.200",
+    "values": {
+      "measured": 0.2
+    }
+  },
+  {
+    "id": "14b",
+    "name": "fan-nowind room MeanSpeed\u003E0.01",
+    "status": "PASS",
+    "pass": true,
+    "detail": "MeanSpeed=0.0586",
+    "values": {
+      "MeanSpeed": 0.0586
+    }
+  },
+  {
+    "id": "14c",
+    "name": "fan-nowind \u003E=1 streamline starts within 0.6m of fan centre",
+    "status": "PASS",
+    "pass": true,
+    "detail": "streamlines=17",
+    "values": {
+      "streamlines": 17
+    }
+  },
+  {
+    "id": "15a",
+    "name": "atrium L2 Inflow\u003E0",
+    "status": "PASS",
+    "pass": true,
+    "detail": "L2 Inflow=2.672",
+    "values": {
+      "Inflow": 2.672
+    }
+  },
+  {
+    "id": "15b",
+    "name": "atrium total ACH\u003E1",
+    "status": "PASS",
+    "pass": true,
+    "detail": "totalACH=89.57",
+    "values": {
+      "totalACH": 89.57
+    }
+  },
+  {
+    "id": "16",
+    "name": "GPU parity |Qeast| within 3%, ACH within 5%",
+    "status": "PASS",
+    "pass": true,
+    "detail": "Qgpu=1.449 Qcpu=1.449 ACHgpu=47.05 ACHcpu=47.05 MLUPSgpu=3297.7 MLUPScpu=100.5 backendGpu=CUDA \u00B7 NVIDIA GeForce RTX 5070 Ti backendCpu=CPU \u00B7 16 threads",
+    "values": {
+      "Qgpu": 1.449,
+      "Qcpu": 1.449,
+      "ACHgpu": 47.05,
+      "ACHcpu": 47.05,
+      "MLUPSgpu": 3297.7,
+      "MLUPScpu": 100.5
+    }
+  },
+  {
+    "id": "17",
+    "name": "JSON round-trip atrium (counts, vertex, opening Normal/IsOpen, source Direction/FlowRate)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "counts=True firstVertex=True openings=True sources=True",
+    "values": {}
+  },
+  {
+    "id": "18a",
+    "name": "stack west(low)\u003C0, east(high)\u003E0",
+    "status": "PASS",
+    "pass": true,
+    "detail": "Qwest=-0.2315 Qeast=0.2367",
+    "values": {
+      "Qwest": -0.2315,
+      "Qeast": 0.2367
+    }
+  },
+  {
+    "id": "18-setup",
+    "name": "stack bespoke session (throat flux, buoyancy head, Cd_eff -- feeds 18b)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "Qeast(t)=0.295 -\u003E 0.289 -\u003E 0.282 -\u003E 0.277 -\u003E 0.271 -\u003E 0.264 -\u003E 0.268 -\u003E 0.261 over 149s  Qthroat(w/e)=0.2537/0.2558 throatArea=1.152m2 (nominal 1.000) meanIndoorT(0.5-2.5m)=22.87 head measured/theory=0.4610/0.4449Pa Cd_eff=0.326 Re=131 nu_eff=1.69E-003m2/s (x113 air)",
+    "values": {
+      "throatArea": 1.152,
+      "measured/theory": 0.461,
+      "Cd_eff": 0.326,
+      "Re": 131,
+      "nu_eff": 0.00169
+    }
+  },
+  {
+    "id": "18b",
+    "name": "stack |Q| within 40% of the orifice equation at the ACTUAL dT and grid Cd(Re)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "meanIndoorT=22.87 dT=6.87 Qest(Cd=0.40)=0.271 Qmeas=0.255 ratio=0.938 | Cd_eff=0.326 Re=131 (Cd=0.6 asymptote would be 0.407, ratio 0.626) | head measured/theory=0.4610/0.4449Pa err=3.6% headOk=True SimSeconds=179",
+    "values": {
+      "meanIndoorT": 22.87,
+      "dT": 6.87,
+      "Cd": 0.4,
+      "Qmeas": 0.255,
+      "ratio": 0.938,
+      "Cd_eff": 0.326,
+      "Re": 131,
+      "Cd#2": 0.6,
+      "measured/theory": 0.461,
+      "err": 3.6,
+      "SimSeconds": 179
+    }
+  },
+  {
+    "id": "18c",
+    "name": "stack room MeanTemperature finite in [16,26]",
+    "status": "PASS",
+    "pass": true,
+    "detail": "MeanTemperature=23.05",
+    "values": {
+      "MeanTemperature": 23.05
+    }
+  },
+  {
+    "id": "19-setup",
+    "name": "heat bespoke session (feeds 19a and 19c)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "steps=36833 (planned 7000) SimSeconds=1445.6 fillingBoxTurnover=464s x3.0 totalWatts=500 indoorVolume=108.2m3 roomMeanT=27.22 backend=CPU \u00B7 16 threads",
+    "values": {
+      "steps": 36833,
+      "SimSeconds": 1445.6,
+      "fillingBoxTurnover": 464,
+      "totalWatts": 500,
+      "indoorVolume": 108.2,
+      "roomMeanT": 27.22
+    }
+  },
+  {
+    "id": "19a",
+    "name": "heat meanT(z=2.5) - meanT(z=0.5) \u003E= 0.3K",
+    "status": "PASS",
+    "pass": true,
+    "detail": "T(2.5m)=28.17 T(0.5m)=26.00 dT=2.17 SimSeconds=1445.6 (= 3.1 filling-box turnovers of 464s)",
+    "values": {
+      "dT": 2.17,
+      "SimSeconds": 1445.6
+    }
+  },
+  {
+    "id": "19b",
+    "name": "heat room MeanTemperature\u003E22",
+    "status": "PASS",
+    "pass": true,
+    "detail": "MeanTemperature=22.55",
+    "values": {
+      "MeanTemperature": 22.55
+    }
+  },
+  {
+    "id": "19c",
+    "name": "heat sealed-room energy balance: room meanT rise vs P*t/(rho*cp*V) within 20%",
+    "status": "PASS",
+    "pass": true,
+    "detail": "measuredRise=5.224K expectedRise=5.435K (P*t_mid/(rhoCp*V), P=500W t_mid=1418.2s of 1445.6s V=108.2m3) err=3.9%",
+    "values": {
+      "measuredRise": 5.224,
+      "expectedRise": 5.435,
+      "P": 500,
+      "t_mid": 1418.2,
+      "V": 108.2,
+      "err": 3.9
+    }
+  },
+  {
+    "id": "20a",
+    "name": "co2 MeanCo2-420 within [0.4,2.5]x expected",
+    "status": "PASS",
+    "pass": true,
+    "detail": "MeanCo2=482.60 dC=62.60 expected~28.70",
+    "values": {
+      "MeanCo2": 482.6,
+      "dC": 62.6
+    }
+  },
+  {
+    "id": "20b",
+    "name": "co2 MeanAge within [0.3,3.0]x nominal (Volume/Inflow)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "MeanAge=132.6 nominal=76.5",
+    "values": {
+      "MeanAge": 132.6,
+      "nominal": 76.5
+    }
+  },
+  {
+    "id": "20c",
+    "name": "co2 AirChangeEffectiveness finite in [0.2,2.5]",
+    "status": "PASS",
+    "pass": true,
+    "detail": "ACE=0.58",
+    "values": {
+      "ACE": 0.58
+    }
+  },
+  {
+    "id": "20d",
+    "name": "scalar uniform-field preservation: no sources -\u003E CO2 stays 420\u002B-0.5 ppm (cross)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "min=419.9997 max=420.0002 ppm over 5620 indoor air cells (outdoor 420)",
+    "values": {
+      "min": 419.9997,
+      "max": 420.0002
+    }
+  },
+  {
+    "id": "20e",
+    "name": "age identity: flow-weighted exhaust age == nominal time V/Q within 10% (cross)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "tau_exhaust=82.6s tau_n=V/Q=77.9s err=6.0% (V=108.6m3 over 5620 room air cells, RoomResult.Volume=108.6m3, Qout=1.3935m3/s over 20 east throat cells) inlet Qin=1.4006m3/s age_in=1.3s -\u003E (Qout*tau_out - Qin*tau_in)/V=1.044 (ideal 1.000)  volume-mean age=158.7s, air-exchange efficiency eps=tau_n/(2*mean)=25% (50% = perfect mixing; RoomResult has no field for eps, printed only)",
+    "values": {
+      "tau_exhaust": 82.6,
+      "V/Q": 77.9,
+      "err": 6,
+      "V": 108.6,
+      "RoomResult.Volume": 108.6,
+      "Qout": 1.3935,
+      "Qin": 1.4006,
+      "age_in": 1.3,
+      "V#2": 1.044,
+      "age": 158.7
+    }
+  },
+  {
+    "id": "21",
+    "name": "co2-closed completes\u003C60s, MeanCo2 finite \u0026 capped, warnings mention no steady state",
+    "status": "PASS",
+    "pass": true,
+    "detail": "elapsed=0.4s MeanCo2=50000.00 mentionsSealed=True notes=\u0022Scalar transport hit its 4000-sweep iteration cap: relative residual 3.931E-4 after 4000 sweeps (tolerance 1E-5) | CO\u2082 has no steady state: no fresh air reaches part of the building (values capped at 50 000 ppm) | Age of air has no steady state: no fresh air reaches part of the building (values capped at 24 h) | Inflow 0 m3/s, outflow 0 m3/s (0% residual) | 0 exterior opening(s) in the balance, 0 interior opening(s) excluded | Scalar transport hit its 4000-sweep iteration cap: relative residual 3.931E-4 after 4000 sweeps (tolerance 1E-5) | CO\u2082 has no steady state: no fresh air reaches part of the building (values capped at 50 000 ppm) | Age of air has no steady state: no fresh air reaches part of the building (values capped at 24 h)\u0022",
+    "values": {
+      "elapsed": 0.4,
+      "MeanCo2": 50000
+    }
+  },
+  {
+    "id": "22a",
+    "name": "comfort ComfortFraction \u0026 DraughtFraction in [0,1]",
+    "status": "PASS",
+    "pass": true,
+    "detail": "ComfortFraction=0.866 DraughtFraction=0.278",
+    "values": {
+      "ComfortFraction": 0.866,
+      "DraughtFraction": 0.278
+    }
+  },
+  {
+    "id": "22b",
+    "name": "comfort \u003E=50% occupied-zone cells finite PMV",
+    "status": "PASS",
+    "pass": true,
+    "detail": "finite=3376/3376 (100%)",
+    "values": {
+      "finite": 3376
+    }
+  },
+  {
+    "id": "22c",
+    "name": "comfort PPD in [5,100] where finite",
+    "status": "PASS",
+    "pass": true,
+    "detail": "checked=5620 allWithinRange=True",
+    "values": {
+      "checked": 5620
+    }
+  },
+  {
+    "id": "22d",
+    "name": "comfort Probe(4,3,1.1) Room=\u0027Room\u0027, finite Speed/Temperature/Pmv",
+    "status": "PASS",
+    "pass": true,
+    "detail": "Room=Room Speed=0.625 Temperature=25.30 Pmv=-0.41",
+    "values": {
+      "Speed": 0.625,
+      "Temperature": 25.3,
+      "Pmv": -0.41
+    }
+  },
+  {
+    "id": "23a",
+    "name": "ledger cross IsPhysical \u0026 Residual\u003C=0.10",
+    "status": "PASS",
+    "pass": true,
+    "detail": "IsPhysical=True Residual=0.021 In=1.419 Out=1.449",
+    "values": {
+      "Residual": 0.021,
+      "In": 1.419,
+      "Out": 1.449
+    }
+  },
+  {
+    "id": "23b",
+    "name": "ledger supply In~=0.139\u002Bwindow inflow",
+    "status": "PASS",
+    "pass": true,
+    "detail": "Ledger.In=0.139 expected~0.139 (0.139\u002Bwindows=0.000)",
+    "values": {
+      "Ledger.In": 0.139,
+      "windows": 0
+    }
+  },
+  {
+    "id": "24a",
+    "name": "anim 6 snapshots, finite speeds, max within 0.3-3x averaged max",
+    "status": "PASS",
+    "pass": true,
+    "detail": "count=6 avgMax=3.246 snapMaxes=[3.30,3.25,3.25,3.25,3.25,3.25]",
+    "values": {
+      "count": 6,
+      "avgMax": 3.246
+    }
+  },
+  {
+    "id": "24b",
+    "name": "anim Renderer.Frames=6, SaveGif writes \u003E10KB",
+    "status": "PASS",
+    "pass": true,
+    "detail": "frameCount=6 gifSize=1239437B path=E:\\Website_designs\\WindFlow_room_simulation\\out\\cross-anim.gif",
+    "values": {
+      "frameCount": 6,
+      "gifSize": 1239437
+    }
+  },
+  {
+    "id": "25a",
+    "name": "iso non-empty mesh, vertices in domain, \u003E80% within footprint\u002B2m",
+    "status": "PASS",
+    "pass": true,
+    "detail": "vertices=24084 insideDomain=24084 insideFootprint=24084",
+    "values": {
+      "vertices": 24084,
+      "insideDomain": 24084,
+      "insideFootprint": 24084
+    }
+  },
+  {
+    "id": "25b",
+    "name": "iso Vorticity.Q finite in air cells, some positive",
+    "status": "PASS",
+    "pass": true,
+    "detail": "airCellsChecked=407654 allFinite=True anyPositive=True",
+    "values": {
+      "airCellsChecked": 407654
+    }
+  },
+  {
+    "id": "26",
+    "name": "sweep OpeningSweep.Run cross: 4 entries, all-open first, all-closed last, top has Result",
+    "status": "PASS",
+    "pass": true,
+    "detail": "count=4 firstOpen=[True,True] lastOpen=[False,False] topHasResult=True",
+    "values": {
+      "count": 4
+    }
+  },
+  {
+    "id": "27",
+    "name": "annual: EPW written, WindRose 2 bins\u002Bcalm, Annual.Run VentilatedShare/CalmHours/bestDirection",
+    "status": "PASS",
+    "pass": true,
+    "detail": "fileOk=True rows=8760 nonCalmBins=2 calmBins=1 CalmHours=760 VentilatedShare=0.913 BestDir=45.0",
+    "values": {
+      "rows": 8760,
+      "nonCalmBins": 2,
+      "calmBins": 1,
+      "CalmHours": 760,
+      "VentilatedShare": 0.913,
+      "BestDir": 45
+    }
+  },
+  {
+    "id": "28",
+    "name": "report ReportBuilder.Build comfort (plan speed \u002B plan PMV) -\u003E out/report.pdf \u003E20KB",
+    "status": "PASS",
+    "pass": true,
+    "detail": "path=E:\\Website_designs\\WindFlow_room_simulation\\out\\report.pdf size=412479B",
+    "values": {
+      "size": 412479
+    }
+  },
+  {
+    "id": "29",
+    "name": "fields: plan Temperature/Co2/Age/Pmv/DraughtRate \u002B Renderer.Difference(cross,comfort) -\u003E PNGs",
+    "status": "PASS",
+    "pass": true,
+    "detail": "saved 6 PNGs: comfort-temperature-plan.png, comfort-co2-plan.png, comfort-age-plan.png, comfort-pmv-plan.png, comfort-draughtrate-plan.png, cross-vs-comfort-difference-plan.png",
+    "values": {}
+  },
+  {
+    "id": "30",
+    "name": "live session: chunked Step == Solve (Q within 1%), UpdateCells closes the west window",
+    "status": "PASS",
+    "pass": true,
+    "detail": "Qsolve=1.449 Qsession=1.449 steps=3821 backend=CUDA \u00B7 NVIDIA GeForce RTX 5070 Ti MLUPSchunked=3389.6 MLUPSmonolithic=3373.9 westInflow open=1.515 closed=-0.002 m3/s  ReadVelocity(423360 cells)=0.46ms x10 ReadVelocity(1559910 cells, GPU)=1.25ms SimSeconds=27.8",
+    "values": {
+      "Qsolve": 1.449,
+      "Qsession": 1.449,
+      "steps": 3821,
+      "MLUPSchunked": 3389.6,
+      "MLUPSmonolithic": 3373.9,
+      "open": 1.515,
+      "closed": -0.002,
+      "SimSeconds": 27.8
+    }
+  },
+  {
+    "id": "31a",
+    "name": "cavity Ra=1e4 hot-wall mean Nu vs Fusegi 3D 2.05 (CPU, steady, within 20% at n=48)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "NuHot=1.802 NuCold=1.677 target=2.05 err=12.1% (band 20%) imbalance=7.2% (max 10%) windows=10 steps=33750 samples=2304 H=16.599mm backend=CPU \u00B7 16 threads",
+    "values": {
+      "NuHot": 1.802,
+      "NuCold": 1.677,
+      "target": 2.05,
+      "err": 12.1,
+      "imbalance": 7.2,
+      "windows": 10,
+      "steps": 33750,
+      "samples": 2304,
+      "H": 16.599
+    }
+  },
+  {
+    "id": "31b",
+    "name": "cavity Ra=1e5 hot-wall mean Nu vs Fusegi 3D 4.34 (CPU, steady, within 20% at n=48)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "NuHot=3.664 NuCold=3.402 target=4.34 err=15.6% (band 20%) imbalance=7.4% (max 10%) windows=15 steps=50625 samples=2304 H=35.761mm backend=CPU \u00B7 16 threads",
+    "values": {
+      "NuHot": 3.664,
+      "NuCold": 3.402,
+      "target": 4.34,
+      "err": 15.6,
+      "imbalance": 7.4,
+      "windows": 15,
+      "steps": 50625,
+      "samples": 2304,
+      "H": 35.761
+    }
+  },
+  {
+    "id": "31c",
+    "name": "cavity Ra=1e4 GPU vs CPU Nu parity (within 10%, same wall BC both backends)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "NuCpu=1.802 NuGpu=1.803 err=0.0% windowsCpu=10 windowsGpu=10 backendCpu=CPU \u00B7 16 threads backendGpu=CUDA \u00B7 NVIDIA GeForce RTX 5070 Ti",
+    "values": {
+      "NuCpu": 1.802,
+      "NuGpu": 1.803,
+      "err": 0,
+      "windowsCpu": 10,
+      "windowsGpu": 10
+    }
+  },
+  {
+    "id": "32",
+    "name": "tworooms-aq downstream MeanAge \u003E upstream, both ACE finite in [0.2,2.5]",
+    "status": "PASS",
+    "pass": true,
+    "detail": "MeanAge A(upstream)=76.5s B(downstream)=153.6s ACE A=0.54 B=0.31 (nominal A=41.6s B=47.6s)",
+    "values": {
+      "A": 0.54,
+      "B": 0.31,
+      "A#2": 41.6,
+      "B#2": 47.6
+    }
+  },
+  {
+    "id": "40a",
+    "name": "ceiling-fan sealed room conserves mass (|mean rho - 1| \u003C= 1e-3)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "massResidual=3.65E-005 cells=42x42x32 Dx=100mm steps=2732 backend=CPU \u00B7 16 threads",
+    "values": {
+      "massResidual": 3.65E-05,
+      "cells": 42,
+      "Dx": 100,
+      "steps": 2732
+    }
+  },
+  {
+    "id": "40b",
+    "name": "ceiling-fan axial flow at the disc within 25% of 1.200 m3/s",
+    "status": "PASS",
+    "pass": true,
+    "detail": "discPlane=1.157 m3/s deviceOutlet=1.184 set=1.200 discCells=312 (14 across)",
+    "values": {
+      "discPlane": 1.157,
+      "deviceOutlet": 1.184,
+      "set": 1.2,
+      "discCells": 312
+    }
+  },
+  {
+    "id": "40c",
+    "name": "ceiling-fan return flow rises along the walls (mean uz \u003E 0 outside the disc)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "meanUz(walls)=0.152 m/s",
+    "values": {}
+  },
+  {
+    "id": "40d",
+    "name": "ceiling-fan mean speed at 1.1 m is in 0.05-1.50 m/s",
+    "status": "PASS",
+    "pass": true,
+    "detail": "meanSpeed(1.1m)=0.394 m/s",
+    "values": {}
+  },
+  {
+    "id": "40f",
+    "name": "fan intake: 0.3 m clears the 0.25 m rule; short clearance alone is not \u0027choked\u0027; short \u002B \u003C 60% of set flow is, once",
+    "status": "PASS",
+    "pass": true,
+    "detail": "clearance=0.30 m short=False delivered=99% quiet=True warnsAt30%=True noStacking=True",
+    "values": {
+      "clearance": 0.3,
+      "delivered": 99
+    }
+  },
+  {
+    "id": "40e",
+    "name": "ceiling-fan GPU = CPU within 1%",
+    "status": "PASS",
+    "pass": true,
+    "detail": "cpu=1.1570 gpu=1.1570 err=0.00% backend=CUDA \u00B7 NVIDIA GeForce RTX 5070 Ti",
+    "values": {
+      "cpu": 1.157,
+      "gpu": 1.157,
+      "err": 0
+    }
+  },
+  {
+    "id": "41a",
+    "name": "split-ac room mean temperature falls (\u003E= 0.2 K over the run)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "T 25.49 -\u003E 24.09 C over 44 s (supply 14 C, 32 cells, steps=8119)",
+    "values": {
+      "steps": 8119
+    }
+  },
+  {
+    "id": "41b",
+    "name": "split-ac duty is consistent with its own V and T_return (within 15%)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "Q=2104 W vs rho*cp*0.168*(24.38-14)=2104 W err=0.0% | room 24.09 C, so an ideal unit ingesting room air would do 1825 W; the gap is this return short-circuiting on its own jet",
+    "values": {
+      "Q": 2104,
+      "err": 0
+    }
+  },
+  {
+    "id": "41c",
+    "name": "split-ac duty balances the room\u0027s enthalpy loss within 20%",
+    "status": "PASS",
+    "pass": true,
+    "detail": "Q=2104 W bulk=rho*cp*48.0m3*0.0316K/s=1832 W err=14.8%",
+    "values": {
+      "Q": 2104,
+      "s": 1832,
+      "err": 14.8
+    }
+  },
+  {
+    "id": "41d",
+    "name": "split-ac mass residual \u003C= 5% (the supply/return pair moves no net mass)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "massResidual=7.65E-005 (sealed room: no opening carries flow)",
+    "values": {
+      "massResidual": 7.65E-05
+    }
+  },
+  {
+    "id": "41f",
+    "name": "split-ac ReturnTemperature vs air at the intake\u0027s own height (\u003C= max(0.5 K, 0.15 |T_supply - T_room|))",
+    "status": "PASS",
+    "pass": true,
+    "detail": "|dT|=1.34 K bound=1.62 K  Treturn=24.38 C at z=2.90 m, air in that layer (device cells excluded)=25.72 C, room mean=24.79 C, separation 0.539 m (vertical 0.500 m), gather cells=16 | profile 0.25m=23.83 0.75m=24.36 1.25m=24.64 1.75m=24.94 2.25m=25.21 2.75m=25.68",
+    "values": {
+      "bound": 1.62,
+      "Treturn": 24.38,
+      "z": 2.9,
+      "mean": 24.79,
+      "cells": 16
+    }
+  },
+  {
+    "id": "41g",
+    "name": "split-ac return grille is not warmer than the room it sits in (\u003C= room mean \u002B 0.5 K)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "Treturn=24.38 C vs room mean 24.79 C (sealed room, no heat source; a return high in a stratified room legitimately reads above the mean when one IS present)",
+    "values": {
+      "Treturn": 24.38
+    }
+  },
+  {
+    "id": "41e",
+    "name": "split-ac thermal GPU = CPU (mean T within 0.05 K, duty within 2%)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "meanT cpu=25.456 gpu=25.456 (dT=0.0000 K) Q cpu=1927 gpu=1927 (err=0.00%) backend=CUDA \u00B7 NVIDIA GeForce RTX 5070 Ti",
+    "values": {
+      "cpu": 25.456,
+      "gpu": 25.456,
+      "dT": 0,
+      "cpu#2": 1927,
+      "gpu#2": 1927,
+      "err": 0
+    }
+  },
+  {
+    "id": "41h",
+    "name": "split-ac return 0.2 m above the outlet warns; the default placement does not",
+    "status": "PASS",
+    "pass": true,
+    "detail": "user gap=0.200 m warned=True, default gap=0.539 m warned=False | \u0022Device Split AC: return grille within 0.2 m of the outlet: it re-ingests its own cold jet, so the return temperature and duty read low - keep it \u003E= 0.5 m away (the default placement does when the ceiling allows)\u0022",
+    "values": {
+      "gap": 0.2,
+      "gap#2": 0.539
+    }
+  },
+  {
+    "id": "42",
+    "name": "fan-nowind Patch source still measures 0.200 m3/s within 20%",
+    "status": "PASS",
+    "pass": true,
+    "detail": "measured=0.200 m3/s fixedCells=2 devices=0",
+    "values": {
+      "measured": 0.2,
+      "fixedCells": 2,
+      "devices": 0
+    }
+  },
+  {
+    "id": "43",
+    "name": "exhaust-fan inflow through the window within 25% of 0.200 m3/s",
+    "status": "PASS",
+    "pass": true,
+    "detail": "planeFlux=0.171 m3/s extractMeasured=0.176 set=0.200 westOpening=-0.160 Dx=268mm cells=50",
+    "values": {
+      "planeFlux": 0.171,
+      "extractMeasured": 0.176,
+      "set": 0.2,
+      "westOpening": -0.16,
+      "Dx": 268,
+      "cells": 50
+    }
+  },
+  {
+    "id": "43b",
+    "name": "exhaust-fan counted once in the mass ledger (Out ~ its measured flow, residual \u003C= 10%)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "In=0.160 Out=0.160 (device measured 0.176, set 0.200) residual=0.1% physical=True SourceFlow=0.176 m3/s | Inflow 0.16 m3/s, outflow 0.16 m3/s (0% residual) | 2 exterior opening(s) in the balance, 0 interior opening(s) excluded | 0 device(s) in the balance, 1 already counted at the opening they sit in",
+    "values": {
+      "In": 0.16,
+      "Out": 0.16,
+      "residual": 0.1,
+      "SourceFlow": 0.176
+    }
+  },
+  {
+    "id": "45a",
+    "name": "supply device: room Inflow and ledger In both ~ 0.200 m3/s (within 30%), counted once",
+    "status": "PASS",
+    "pass": true,
+    "detail": "roomInflow=0.177 ledgerIn=0.182 Out=0.187 residual=2.6% device=0.177 m3/s ACH=5.85",
+    "values": {
+      "roomInflow": 0.177,
+      "ledgerIn": 0.182,
+      "Out": 0.187,
+      "residual": 2.6,
+      "device": 0.177,
+      "ACH": 5.85
+    }
+  },
+  {
+    "id": "45b",
+    "name": "recirculating fan: nothing in the ledger, still reported in SourceFlow",
+    "status": "PASS",
+    "pass": true,
+    "detail": "ledgerIn=0.0000 Out=0.0000 physical=True SourceFlow=1.532 of 1.500 m3/s roomMeanSpeed=0.169 m/s roomInflow=0.0000 m3/s (must stay ~0: the fan creates no air)",
+    "values": {
+      "ledgerIn": 0,
+      "Out": 0,
+      "SourceFlow": 1.532,
+      "roomMeanSpeed": 0.169,
+      "roomInflow": 0
+    }
+  },
+  {
+    "id": "44a",
+    "name": "pedestal-fan \u002B cassette \u002B diffuser each move their set flow within 40%",
+    "status": "PASS",
+    "pass": true,
+    "detail": "PedestalFan 0.199/0.200 m3/s (32 cells), CassetteAc 0.232/0.300 m3/s (200 cells), Diffuser 0.189/0.200 m3/s (16 cells)",
+    "values": {}
+  },
+  {
+    "id": "44b",
+    "name": "three devices together still conserve mass (|mean rho - 1| \u003C= 1e-3)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "massResidual=3.02E-005 steps=2538",
+    "values": {
+      "massResidual": 3.02E-05,
+      "steps": 2538
+    }
+  },
+  {
+    "id": "44c",
+    "name": "hood with no opening in front of it warns and still builds a capture region",
+    "status": "PASS",
+    "pass": true,
+    "detail": "cells=108 warnings=[Device Hood: a solid surface sits within 1 m in front of the extract, so it cannot remove air - put it in an open opening through the wall]",
+    "values": {
+      "cells": 108
+    }
+  },
+  {
+    "id": "50a",
+    "name": "poiseuille interpolated wall: fitted channel width within 5% of the true 5.4 cells",
+    "status": "PASS",
+    "pass": true,
+    "detail": "width=5.37 cells (true 5.40) err=0.5% peak=0.0283 m/s (plug inlet 0.024, parabola peak should be ~1.5x) fitResidual=0.35% of peak u=[0.00384,0.01936,0.02746,0.02746,0.01936,0.00384]",
+    "values": {
+      "width": 5.37,
+      "err": 0.5,
+      "peak": 0.0283,
+      "fitResidual": 0.35
+    }
+  },
+  {
+    "id": "50b",
+    "name": "poiseuille halfway bounce-back is the one that misses the wall position",
+    "status": "PASS",
+    "pass": true,
+    "detail": "halfway width=5.90 cells err=9.2% vs interpolated 0.5% (the wall sits 0.3 of a cell inside the solid layer, so halfway has to read ~11% wide) u=[0.00793,0.02069,0.02731,0.02731,0.02069,0.00793]",
+    "values": {
+      "width": 5.9,
+      "err": 9.2
+    }
+  },
+  {
+    "id": "50c",
+    "name": "poiseuille interpolated wall GPU = CPU within 1%",
+    "status": "PASS",
+    "pass": true,
+    "detail": "cpu=5.372 gpu=5.372 cells err=0.00% peak cpu=0.0283 gpu=0.0283 m/s backend=CUDA \u00B7 NVIDIA GeForce RTX 5070 Ti",
+    "values": {
+      "cpu": 5.372,
+      "gpu": 5.372,
+      "err": 0,
+      "cpu#2": 0.0283,
+      "gpu#2": 0.0283
+    }
+  },
+  {
+    "id": "51",
+    "name": "thin wall: a 50 mm partition in a 255 mm grid is solid across the whole plane and leaks nothing",
+    "status": "PASS",
+    "pass": true,
+    "detail": "partitionPlane solid=242 air=0 cells, |flux| through it=0.0000 m3/s vs 0.028 m3/s in at the west window, Dx=268mm (wall is 0.19 cells thick)",
+    "values": {
+      "solid": 242,
+      "air": 0,
+      "it": 0,
+      "Dx": 268
+    }
+  },
+  {
+    "id": "52",
+    "name": "simulation box with its \u002BX face inside the x=5.5 m partition solves instead of diverging",
+    "status": "PASS",
+    "pass": true,
+    "detail": "grid 64x98x39 Dx=100mm finite=True roomMeanSpeed=1.097 m/s ACH=213.2 ledgerResidual=1% | Simulation box 6.4 x 9.7 x 3.9 m at 100 mm: its faces are ordinary domain boundaries, so flow across a face that cuts through the building is only as good as an open face.",
+    "values": {
+      "Dx": 100,
+      "roomMeanSpeed": 1.097,
+      "ACH": 213.2,
+      "ledgerResidual": 1
+    }
+  },
+  {
+    "id": "47",
+    "name": "Voxelizer.Build(sealUnreachable: false) keeps a shut, Room-less interior; the sealed build removes it",
+    "status": "PASS",
+    "pass": true,
+    "detail": "indoor air cells unsealed=4050 sealed=0 grid=97x88x37 Dx=435mm",
+    "values": {
+      "unsealed": 4050,
+      "sealed": 0,
+      "grid": 97,
+      "Dx": 435
+    }
+  },
+  {
+    "id": "48a",
+    "name": "nested box = whole domain at Dx/2: east opening flow within 10% of a uniform Dx/2 run",
+    "status": "PASS",
+    "pass": true,
+    "detail": "nested Qeast=1.509 Qwest=-1.467 | uniform Qeast=1.449 Qwest=-1.419 (Dx 268mm 112x105x36) err=4.1% | fine=439264 cells (faces 15552, 3816 inflow; sponge 114048) coarseSteps=911 11.8s 67.9 fine-MLUPS CPU \u00B7 16 threads",
+    "values": {
+      "Qeast": 1.509,
+      "Qwest": -1.467,
+      "Qeast#2": 1.449,
+      "Qwest#2": -1.419,
+      "err": 4.1,
+      "fine": 439264,
+      "coarseSteps": 911
+    }
+  },
+  {
+    "id": "48d(a)",
+    "name": "nested whole-domain box mass ledger residual \u003C= 10%",
+    "status": "PASS",
+    "pass": true,
+    "detail": "in=633.445 out=635.944 m3/s residual=0.4%",
+    "values": {
+      "in": 633.445,
+      "out": 635.944,
+      "residual": 0.4
+    }
+  },
+  {
+    "id": "48c",
+    "name": "nested box GPU = CPU within 1% (east opening flow)",
+    "status": "PASS",
+    "pass": true,
+    "detail": "cpu=1.5091 gpu=1.5117 err=0.17% | fine=439264 cells (faces 15552, 3816 inflow; sponge 114048) coarseSteps=911 0.5s 1689.3 fine-MLUPS CUDA \u00B7 NVIDIA GeForce RTX 5070 Ti",
+    "values": {
+      "cpu": 1.5091,
+      "gpu": 1.5117,
+      "err": 0.17,
+      "fine": 439264,
+      "coarseSteps": 911
+    }
+  },
+  {
+    "id": "48b",
+    "name": "sample-house box across the living room and landing: fine opening flows within 25% of the uniform whole-building run at the box\u0027s Dx",
+    "status": "PASS",
+    "pass": true,
+    "detail": "w-hall-e fine box=1.563 uniform=1.519 (3%) coarse=1.126 v1 open-face box=4.803 | d-kit-hall fine box=0.790 uniform=0.840 (6%) coarse=1.050 v1 open-face box=7.393 | coarse Dx=395mm uniform Dx=198mm (3.3M cells) | fine=46200 cells (faces 5258, 2324 inflow; sponge 24835) coarseSteps=1740 10.2s 15.7 fine-MLUPS CPU \u00B7 16 threads",
+    "values": {
+      "box": 1.563,
+      "uniform": 1.519,
+      "coarse": 1.126,
+      "box#2": 4.803,
+      "box#3": 0.79,
+      "uniform#2": 0.84,
+      "coarse#2": 1.05,
+      "box#4": 7.393,
+      "Dx": 395,
+      "Dx#2": 198,
+      "fine": 46200,
+      "coarseSteps": 1740
+    }
+  },
+  {
+    "id": "48d(b)",
+    "name": "sample-house fine box mass ledger residual \u003C= 10%",
+    "status": "PASS",
+    "pass": true,
+    "detail": "in=21.357 out=22.633 m3/s residual=5.6%",
+    "values": {
+      "in": 21.357,
+      "out": 22.633,
+      "residual": 5.6
+    }
+  },
+  {
+    "id": "48",
+    "name": "nested speed (sample house, Bedroom 1 box, GPU)",
+    "status": "NOTE",
+    "pass": true,
+    "detail": "coarse=1543800 fine=187200 coarse step alone 0.51 ms | nested ms_per_coarse_step=0.74 = 1344 coarse steps/s, total_mlups=2578 fine_mlups=503 | CUDA \u00B7 NVIDIA GeForce RTX 5070 Ti",
+    "values": {
+      "coarse": 1543800,
+      "fine": 187200,
+      "ms_per_coarse_step": 0.74,
+      "total_mlups": 2578,
+      "fine_mlups": 503
+    }
+  }
+]

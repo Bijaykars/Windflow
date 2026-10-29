@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WindFlow — How it works</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Inter:wght@400;500;600&display=block" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1F1E1D;
+    --muted: #6F6C66;
+    --rule: #E4E1DB;
+    --beige: #F4F1EB;
+    --blue: #2F6FDB;
+    --blue-mid: #8FB0EA;
+    --blue-tint: #DCE7F9;
+    --aged: #C8C6C1;
+    --aged-tint: #ECEAE6;
+    --serif: "Newsreader", Georgia, Cambria, "Times New Roman", serif;
+    --sans: "Inter", "Segoe UI Variable Text", "Segoe UI", Arial, sans-serif;
+  }
+  @page { size: A4; margin: 10mm 17mm 14mm 17mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #fff; }
+  body {
+    font-family: var(--sans);
+    font-size: 9.4pt;
+    line-height: 1.45;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  @media screen {
+    body { background: #d9d7d2; padding: 10mm 0; }
+    .page { background: #fff; margin: 0 auto 10mm; padding: 17mm 17mm 15mm; width: 210mm; box-shadow: 0 1px 6px rgba(0,0,0,.18); }
+  }
+  .page {
+    width: 176mm;
+    height: 271mm;
+    display: flex;
+    flex-direction: column;
+    break-after: page;
+    page-break-after: always;
+    position: relative;
+  }
+  @media screen { .page { width: 210mm; height: 297mm; } }
+  .page:last-child { break-after: auto; page-break-after: auto; }
+  .runhead {
+    font-size: 6.8pt; color: #8B8883; letter-spacing: .01em;
+    margin: 0 0 6mm; height: 3mm; line-height: 3mm;
+  }
+  .runfoot {
+    margin-top: auto;
+    font-size: 6.8pt; color: #8B8883; text-align: right;
+    height: 3mm; line-height: 3mm; padding-top: 2mm;
+  }
+  h1 {
+    font-family: var(--serif); font-weight: 400; font-size: 23pt; line-height: 1.15;
+    letter-spacing: -.012em; margin: 0 0 3.2mm;
+  }
+  .meta { display: flex; gap: 2mm; align-items: center; font-size: 7.6pt; color: var(--muted); margin: 0 0 4.5mm; }
+  .meta span { background: var(--beige); padding: .6mm 1.8mm; border-radius: 1mm; }
+  h2 {
+    font-family: var(--serif); font-weight: 400; font-size: 13.5pt; line-height: 1.2;
+    letter-spacing: -.006em; margin: 0 0 1.8mm;
+    break-after: avoid;
+  }
+  h2 small { font-family: var(--sans); font-size: 8pt; color: var(--muted); letter-spacing: 0; margin-left: 2.2mm; font-weight: 400; }
+  p { margin: 0 0 2mm; }
+  p.lead { font-size: 9.8pt; line-height: 1.48; margin-bottom: 4.5mm; }
+  b { font-weight: 600; }
+  .section { margin-bottom: 5.2mm; break-inside: avoid; }
+  .figtitle { font-weight: 600; font-size: 8.6pt; margin: 0 0 1.2mm; }
+  .caption { font-size: 7.8pt; color: var(--muted); margin: 1.2mm 0 0; line-height: 1.4; }
+  .caption b { color: var(--ink); font-weight: 600; }
+  figure { margin: 0; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  svg text { font-family: var(--sans); fill: var(--ink); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; align-items: start; }
+  .two-wide { display: grid; grid-template-columns: 1.3fr 1fr; gap: 6mm; align-items: start; }
+  .defs { display: grid; gap: 2mm; font-size: 8.6pt; line-height: 1.42; }
+  .defs .d { padding-left: 3mm; border-left: 1.6px solid var(--blue); }
+  .defs .d.grey { border-left-color: var(--aged); }
+  .defs .d .n { font-weight: 600; display: block; margin-bottom: .3mm; }
+  .defs .d .eq { font-family: var(--serif); font-size: 9.8pt; display: block; margin: .5mm 0 .7mm; white-space: nowrap; }
+  .note { background: var(--beige); padding: 2mm 3mm; border-radius: 1mm; font-size: 8.6pt; line-height: 1.42; }
+  .strip { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  .strip .q { padding: 2.4mm 2.4mm 2.4mm 0; border-right: 1px solid var(--rule); margin-right: 2.4mm; }
+  .strip .q:last-child { border-right: 0; margin-right: 0; }
+  .strip .q svg { width: 12mm; height: 12mm; margin-bottom: 1.4mm; }
+  .strip .q .nm { font-family: var(--serif); font-size: 11.5pt; line-height: 1.1; margin-bottom: 1mm; }
+  .strip .q .tm { font-weight: 600; font-size: 8.8pt; margin-bottom: .8mm; }
+  .strip .q .tx { font-size: 8.2pt; color: #3F3D39; line-height: 1.4; }
+  .strip .q .tx em { font-style: normal; color: var(--muted); }
+  .limits { display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 5mm; row-gap: 0; border-top: 1px solid var(--rule); }
+  .limits .l { display: grid; grid-template-columns: 10mm 1fr; gap: 2mm; padding: 2.6mm 0; border-bottom: 1px solid var(--rule); font-size: 8.3pt; line-height: 1.4; }
+  .limits .l svg { width: 10mm; height: 10mm; }
+  .limits .l .t { font-weight: 600; display: block; margin-bottom: .3mm; }
+  .limits .l .x { color: #3F3D39; }
+  .closing { margin-top: 4.5mm; padding-top: 2.6mm; border-top: 1px solid var(--rule); font-size: 8.2pt; color: #3F3D39; line-height: 1.45; }
+  .closing b { color: var(--ink); }
+  .thead { background: var(--beige); font-weight: 500; font-size: 8pt; color: #3F3D39; }
+  table.win { width: 100%; border-collapse: collapse; font-size: 8.3pt; margin-top: 2mm; }
+  table.win th, table.win td { text-align: left; padding: 1.4mm 2.2mm; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  table.win th { background: var(--beige); font-weight: 500; color: #3F3D39; }
+  table.win td:first-child { font-weight: 600; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<!-- ============================ PAGE 1 ============================ -->
+<section class="page">
+  <div class="runhead">WindFlow — How it works</div>
+
+  <h1>How WindFlow works</h1>
+  <div class="meta"><span>Oct 29, 2026</span>·<span>@Bijay Karki</span></div>
+
+  <p class="lead">WindFlow blows wind through and around your building on the graphics card and reports, room by room, how fresh the air is. It is a design-comparison tool: it ranks options against each other on the same model. It does not certify a building.</p>
+
+  <!-- 1. Pipeline -->
+  <div class="section">
+    <div class="figtitle">From model to report in six steps</div>
+    <figure>
+    <svg viewBox="0 0 704 128" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0.5 L7.5,4 L0,7.5" fill="none" stroke="#2F6FDB" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+        <marker id="ahg" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0.5 L7.5,4 L0,7.5" fill="none" stroke="#9A9792" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+        <linearGradient id="age" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#2F6FDB"/><stop offset="1" stop-color="#C8C6C1"/>
+        </linearGradient>
+        <pattern id="grid8" width="8" height="8" patternUnits="userSpaceOnUse">
+          <path d="M8,0 L0,0 0,8" fill="none" stroke="#9A9792" stroke-width=".6"/>
+        </pattern>
+        <clipPath id="houseclip"><path d="M4,30 L30,8 L56,30 L56,60 L4,60 Z"/></clipPath>
+      </defs>
+
+      <!-- connectors -->
+      <g stroke="#9A9792" stroke-width="1" fill="none" marker-end="url(#ahg)">
+        <line x1="88" y1="36" x2="110" y2="36"/>
+        <line x1="208" y1="36" x2="230" y2="36"/>
+        <line x1="328" y1="36" x2="350" y2="36"/>
+        <line x1="448" y1="36" x2="470" y2="36"/>
+        <line x1="568" y1="36" x2="590" y2="36"/>
+      </g>
+
+      <!-- 1 building model -->
+      <g transform="translate(22,6)">
+        <path d="M4,30 L30,8 L56,30 L56,60 L4,60 Z" fill="none" stroke="#1F1E1D" stroke-width="1.2" stroke-linejoin="round"/>
+        <rect x="14" y="38" width="10" height="10" fill="none" stroke="#1F1E1D" stroke-width="1"/>
+        <rect x="36" y="38" width="10" height="10" fill="none" stroke="#1F1E1D" stroke-width="1"/>
+        <path d="M25,60 L25,46 L35,46 L35,60" fill="none" stroke="#1F1E1D" stroke-width="1"/>
+      </g>
+      <text x="52" y="84" text-anchor="middle" font-size="9.5" font-weight="600">Building model</text>
+      <text x="52" y="96" text-anchor="middle" font-size="8.4" fill="#6F6C66">Revit export, a mesh,</text>
+      <text x="52" y="107" text-anchor="middle" font-size="8.4" fill="#6F6C66">or drawn in the app</text>
+
+      <!-- 2 grid -->
+      <g transform="translate(142,6)">
+        <path d="M4,30 L30,8 L56,30 L56,60 L4,60 Z" fill="url(#grid8)" stroke="none"/>
+        <path d="M4,30 L30,8 L56,30 L56,60 L4,60 Z" fill="none" stroke="#1F1E1D" stroke-width="1.2" stroke-linejoin="round"/>
+        <rect x="28" y="32" width="8" height="8" fill="#2F6FDB"/>
+      </g>
+      <text x="172" y="84" text-anchor="middle" font-size="9.5" font-weight="600">Cut into cubes</text>
+      <text x="172" y="96" text-anchor="middle" font-size="8.4" fill="#6F6C66">the “grid”; one cube</text>
+      <text x="172" y="107" text-anchor="middle" font-size="8.4" fill="#6F6C66">is one cell</text>
+
+      <!-- 3 wind -->
+      <g transform="translate(262,6)">
+        <path d="M4,30 L30,8 L56,30 L56,60 L4,60 Z" fill="url(#grid8)" opacity=".55"/>
+        <path d="M4,30 L30,8 L56,30 L56,60 L4,60 Z" fill="none" stroke="#1F1E1D" stroke-width="1.2" stroke-linejoin="round"/>
+        <g fill="none" stroke="#2F6FDB" stroke-width="1.3" stroke-linecap="round" marker-end="url(#ah)">
+          <path d="M-8,36 C 10,36 14,30 24,30 S 44,38 66,38"/>
+          <path d="M-8,46 C 12,46 18,52 30,52 S 48,46 66,46"/>
+          <path d="M-8,16 C 6,16 12,10 20,10"/>
+        </g>
+      </g>
+      <text x="292" y="84" text-anchor="middle" font-size="9.5" font-weight="600">Wind blows through</text>
+      <text x="292" y="96" text-anchor="middle" font-size="8.4" fill="#6F6C66">a lattice-Boltzmann solver</text>
+      <text x="292" y="107" text-anchor="middle" font-size="8.4" fill="#6F6C66">runs on the GPU</text>
+
+      <!-- 4 air age -->
+      <g transform="translate(382,6)">
+        <rect x="4" y="8" width="52" height="52" fill="url(#age)" clip-path="url(#houseclip)"/>
+        <path d="M4,30 L30,8 L56,30 L56,60 L4,60 Z" fill="url(#grid8)" opacity=".5"/>
+        <path d="M4,30 L30,8 L56,30 L56,60 L4,60 Z" fill="none" stroke="#1F1E1D" stroke-width="1.2" stroke-linejoin="round"/>
+      </g>
+      <text x="412" y="84" text-anchor="middle" font-size="9.5" font-weight="600">Air age tracked</text>
+      <text x="412" y="96" text-anchor="middle" font-size="8.4" fill="#6F6C66">seconds since each bit</text>
+      <text x="412" y="107" text-anchor="middle" font-size="8.4" fill="#6F6C66">of air was outdoors</text>
+
+      <!-- 5 per-room -->
+      <g transform="translate(502,6)">
+        <rect x="4" y="14" width="52" height="40" fill="none" stroke="#1F1E1D" stroke-width="1.2"/>
+        <rect x="4" y="14" width="22" height="22" fill="#DCE7F9"/>
+        <rect x="26" y="14" width="30" height="22" fill="#B9CDF3"/>
+        <rect x="4" y="36" width="52" height="18" fill="#ECEAE6"/>
+        <path d="M26,14 L26,36 M4,36 L56,36" fill="none" stroke="#1F1E1D" stroke-width="1"/>
+        <g stroke="#1F1E1D" stroke-width="1.6"><line x1="8" y1="22" x2="18" y2="22"/><line x1="32" y1="22" x2="48" y2="22"/><line x1="8" y1="44" x2="22" y2="44"/></g>
+      </g>
+      <text x="532" y="84" text-anchor="middle" font-size="9.5" font-weight="600">Results per room</text>
+      <text x="532" y="96" text-anchor="middle" font-size="8.4" fill="#6F6C66">two numbers for</text>
+      <text x="532" y="107" text-anchor="middle" font-size="8.4" fill="#6F6C66">every room</text>
+
+      <!-- 6 report -->
+      <g transform="translate(622,6)">
+        <path d="M12,8 L40,8 L50,18 L50,60 L12,60 Z" fill="none" stroke="#1F1E1D" stroke-width="1.2" stroke-linejoin="round"/>
+        <path d="M40,8 L40,18 L50,18" fill="none" stroke="#1F1E1D" stroke-width="1"/>
+        <g stroke="#9A9792" stroke-width="1.2"><line x1="18" y1="26" x2="44" y2="26"/><line x1="18" y1="32" x2="38" y2="32"/></g>
+        <g fill="#2F6FDB"><rect x="18" y="46" width="5" height="8"/><rect x="25" y="41" width="5" height="13"/><rect x="32" y="48" width="5" height="6"/><rect x="39" y="38" width="5" height="16"/></g>
+      </g>
+      <text x="652" y="84" text-anchor="middle" font-size="9.5" font-weight="600">Report</text>
+      <text x="652" y="96" text-anchor="middle" font-size="8.4" fill="#6F6C66">a PDF you can</text>
+      <text x="652" y="107" text-anchor="middle" font-size="8.4" fill="#6F6C66">hand to the client</text>
+    </svg>
+    </figure>
+    <p class="caption">Figure 1 · The pipeline. Blue is fresh outdoor air, grey is air that has been indoors a while; the same colour code is used in every figure below.</p>
+  </div>
+
+  <!-- 2. Two numbers per room -->
+  <div class="section">
+    <h2>Two numbers for every room</h2>
+    <div class="two-wide">
+      <figure>
+        <svg viewBox="0 0 420 150" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="ageA" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2F6FDB"/><stop offset="1" stop-color="#8FB0EA"/></linearGradient>
+            <linearGradient id="ageB" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8FB0EA"/><stop offset="1" stop-color="#C8C6C1"/></linearGradient>
+          </defs>
+          <!-- outdoor labels -->
+          <text x="8" y="48" font-size="9.2" fill="#6F6C66">outdoors</text>
+          <text x="412" y="48" font-size="9.2" fill="#6F6C66" text-anchor="end">outdoors</text>
+          <!-- rooms -->
+          <rect x="92" y="30" width="110" height="70" fill="url(#ageA)" opacity=".35"/>
+          <rect x="92" y="30" width="110" height="70" fill="none" stroke="#1F1E1D" stroke-width="1.2"/>
+          <rect x="226" y="30" width="110" height="70" fill="url(#ageB)" opacity=".35"/>
+          <rect x="226" y="30" width="110" height="70" fill="none" stroke="#1F1E1D" stroke-width="1.2"/>
+          <!-- openings (gaps in walls) -->
+          <rect x="90" y="56" width="4" height="18" fill="#fff"/>
+          <rect x="200" y="56" width="4" height="18" fill="#fff"/>
+          <rect x="224" y="56" width="4" height="18" fill="#fff"/>
+          <rect x="334" y="56" width="4" height="18" fill="#fff"/>
+          <!-- flow arrows -->
+          <g fill="none" stroke-width="1.6" stroke-linecap="round">
+            <line x1="52" y1="65" x2="88" y2="65" stroke="#2F6FDB" marker-end="url(#ah)"/>
+            <line x1="120" y1="65" x2="182" y2="65" stroke="#2F6FDB" opacity=".8" marker-end="url(#ah)"/>
+            <line x1="204" y1="65" x2="222" y2="65" stroke="#6F8FCB" marker-end="url(#ahg)"/>
+            <line x1="254" y1="65" x2="316" y2="65" stroke="#9A9792" marker-end="url(#ahg)"/>
+            <line x1="338" y1="65" x2="372" y2="65" stroke="#9A9792" marker-end="url(#ahg)"/>
+          </g>
+          <text x="147" y="46" text-anchor="middle" font-size="10" font-weight="600">Room A</text>
+          <text x="281" y="46" text-anchor="middle" font-size="10" font-weight="600">Room B</text>
+          <text x="147" y="90" text-anchor="middle" font-size="8.8" fill="#1F1E1D">air is young here</text>
+          <text x="281" y="90" text-anchor="middle" font-size="8.8" fill="#1F1E1D">the same air, older</text>
+          <!-- readings -->
+          <g font-size="8.8">
+            <text x="147" y="118" text-anchor="middle"><tspan font-weight="600">Fresh-air ACH</tspan> reads higher</text>
+            <text x="281" y="118" text-anchor="middle"><tspan font-weight="600">Fresh-air ACH</tspan> reads lower</text>
+            <text x="147" y="132" text-anchor="middle" fill="#6F6C66" font-size="8.2">Total exchange: counted</text>
+            <text x="281" y="132" text-anchor="middle" fill="#6F6C66" font-size="8.2">Total exchange: counted again</text>
+          </g>
+          <!-- age scale -->
+          <text x="8" y="12" font-size="8" fill="#6F6C66">age of air</text>
+          <rect x="52" y="5" width="120" height="6" fill="url(#age)"/>
+          <text x="52" y="22" font-size="7.6" fill="#6F6C66">fresh</text>
+          <text x="172" y="22" font-size="7.6" fill="#6F6C66" text-anchor="end">old</text>
+        </svg>
+        <p class="caption">Figure 2 · Two rooms in series. The air that reaches Room B has already aged in Room A, so B’s fresh-air number is lower even though the same air passes through both.</p>
+      </figure>
+      <div class="defs">
+        <div class="d">
+          <span class="n">Fresh-air ACH</span>
+          <span class="eq">Fresh-air ACH = 3600 ÷ mean age of air (s)</span>
+          How many times an hour the room’s air is replaced by air that is <i>effectively</i> fresh. Air arriving through other rooms counts at its real age.
+        </div>
+        <div class="d grey">
+          <span class="n">Total exchange</span>
+          All air entering the room per hour, including air that came from other rooms. It is a measure of how much air moves, <b>not</b> a ventilation rate.
+        </div>
+        <div class="note"><b>Read the two together.</b> A room can have a lot of air moving through it and still little fresh air.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Venn -->
+  <div class="section">
+    <h2>What the numbers are good for</h2>
+    <figure>
+    <svg viewBox="0 0 704 230" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="280" cy="115" r="112" fill="#DCE7F9" opacity=".75"/>
+      <circle cx="424" cy="115" r="112" fill="#ECEAE6" opacity=".9"/>
+      <circle cx="280" cy="115" r="112" fill="none" stroke="#2F6FDB" stroke-width="1.2"/>
+      <circle cx="424" cy="115" r="112" fill="none" stroke="#9A9792" stroke-width="1.2"/>
+      <g font-size="8.8">
+        <text x="256" y="51" text-anchor="middle" font-family="Newsreader, Georgia, serif" font-size="13.5" fill="#2F6FDB">Reliable</text>
+        <text x="244" y="81" text-anchor="middle">Comparing design options</text>
+        <text x="244" y="93" text-anchor="middle">on the same model and grid</text>
+        <text x="246" y="115" text-anchor="middle">Ranking rooms and layouts</text>
+        <text x="246" y="127" text-anchor="middle" fill="#6F6C66" font-size="8">wind-tunnel check: 5 opening</text>
+        <text x="246" y="138" text-anchor="middle" fill="#6F6C66" font-size="8">layouts ranked correctly</text>
+        <text x="246" y="160" text-anchor="middle">Direction of flow</text>
+        <text x="254" y="182" text-anchor="middle">Where air stagnates</text>
+      </g>
+      <g font-size="8.8">
+        <text x="448" y="51" text-anchor="middle" font-family="Newsreader, Georgia, serif" font-size="13.5" fill="#6F6C66">Indicative only</text>
+        <text x="460" y="81" text-anchor="middle">Absolute air-change rates</text>
+        <text x="460" y="93" text-anchor="middle" fill="#6F6C66" font-size="8">cross-vent flow read 1.6–2.2× a</text>
+        <text x="460" y="104" text-anchor="middle" fill="#6F6C66" font-size="8">tracer test, about 10–35 %</text>
+        <text x="460" y="115" text-anchor="middle" fill="#6F6C66" font-size="8">above PIV/LES</text>
+        <text x="462" y="137" text-anchor="middle">How far a jet reaches</text>
+        <text x="456" y="160" text-anchor="middle">Temperatures</text>
+        <text x="456" y="172" text-anchor="middle" fill="#6F6C66" font-size="8">thermal is beta</text>
+      </g>
+      <g font-size="8">
+        <text x="352" y="97" text-anchor="middle" font-weight="600" font-size="8.4">The rule</text>
+        <text x="352" y="111" text-anchor="middle">compare options</text>
+        <text x="352" y="123" text-anchor="middle">on the same grid</text>
+        <text x="352" y="135" text-anchor="middle">and quality level</text>
+      </g>
+    </svg>
+    </figure>
+    <p class="caption">Figure 3 · Trust the ranking, not the absolute number. Changing the cell size alone can move one room by up to about 35 % and the whole building by about 20 %, so never compare results from different grids.</p>
+  </div>
+
+  <div class="runfoot">Page 1 of 2</div>
+</section>
+
+<!-- ============================ PAGE 2 ============================ -->
+<section class="page">
+  <div class="runhead">WindFlow — How it works</div>
+
+  <!-- 5. Window size in cubes -->
+  <div class="section">
+    <h2>Why a window’s size in cubes matters</h2>
+    <div class="two-wide">
+      <figure>
+        <svg viewBox="0 0 420 156" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="c4" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20,0 L0,0 0,20" fill="none" stroke="#9A9792" stroke-width=".8"/></pattern>
+            <pattern id="c8" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M10,0 L0,0 0,10" fill="none" stroke="#9A9792" stroke-width=".7"/></pattern>
+            <pattern id="c16" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M5,0 L0,0 0,5" fill="none" stroke="#9A9792" stroke-width=".5"/></pattern>
+          </defs>
+          <!-- 4 cells: window edge falls mid-cell -->
+          <g transform="translate(10,20)">
+            <rect x="0" y="0" width="100" height="100" fill="url(#c4)"/>
+            <rect x="0" y="0" width="100" height="100" fill="none" stroke="#9A9792" stroke-width=".8"/>
+            <!-- cells the grid decides are open: 3 full + partials lost -->
+            <rect x="20" y="20" width="60" height="60" fill="#DCE7F9"/>
+            <!-- true window -->
+            <rect x="10" y="10" width="80" height="80" fill="none" stroke="#2F6FDB" stroke-width="1.6" stroke-dasharray="3 2.5"/>
+            <text x="50" y="118" text-anchor="middle" font-size="9.5" font-weight="600">4 cells across</text>
+            <text x="50" y="130" text-anchor="middle" font-size="8.6" fill="#6F6C66">Cd 0.48–0.60</text>
+          </g>
+          <!-- 8 cells -->
+          <g transform="translate(160,20)">
+            <rect x="0" y="0" width="100" height="100" fill="url(#c8)"/>
+            <rect x="0" y="0" width="100" height="100" fill="none" stroke="#9A9792" stroke-width=".8"/>
+            <rect x="10" y="10" width="80" height="80" fill="#DCE7F9"/>
+            <rect x="10" y="10" width="80" height="80" fill="none" stroke="#2F6FDB" stroke-width="1.6" stroke-dasharray="3 2.5"/>
+            <text x="50" y="118" text-anchor="middle" font-size="9.5" font-weight="600">8 cells across</text>
+            <text x="50" y="130" text-anchor="middle" font-size="8.6" fill="#6F6C66">within ±1–3 %</text>
+          </g>
+          <!-- 16 cells -->
+          <g transform="translate(310,20)">
+            <rect x="0" y="0" width="100" height="100" fill="url(#c16)"/>
+            <rect x="0" y="0" width="100" height="100" fill="none" stroke="#9A9792" stroke-width=".8"/>
+            <rect x="10" y="10" width="80" height="80" fill="#DCE7F9"/>
+            <rect x="10" y="10" width="80" height="80" fill="none" stroke="#2F6FDB" stroke-width="1.6" stroke-dasharray="3 2.5"/>
+            <text x="50" y="118" text-anchor="middle" font-size="9.5" font-weight="600">16 cells across</text>
+            <text x="50" y="130" text-anchor="middle" font-size="8.6" fill="#6F6C66">within ±1–3 %</text>
+          </g>
+          <!-- legend -->
+          <g font-size="8.6" fill="#6F6C66">
+            <rect x="10" y="2" width="14" height="0" />
+            <line x1="10" y1="5" x2="24" y2="5" stroke="#2F6FDB" stroke-width="1.6" stroke-dasharray="3 2.5"/>
+            <text x="28" y="8">the window as drawn</text>
+            <rect x="120" y="1" width="9" height="8" fill="#DCE7F9" stroke="#9A9792" stroke-width=".5"/>
+            <text x="133" y="8">the opening the grid actually sees</text>
+          </g>
+        </svg>
+        <p class="caption">Figure 4 · The same window on three grids. On a coarse grid the window edge lands between cubes, so part of the opening is lost and the result shifts with where the grid happens to fall.</p>
+      </figure>
+      <div>
+        <p>A sharp-edged window lets air through with a discharge coefficient of about <b>Cd ≈ 0.61</b>. The grid has to reproduce that.</p>
+        <table class="win">
+          <tr><th>Cells across</th><th>What you get</th></tr>
+          <tr><td>about 4</td><td>Cd 0.48–0.60: flow up to about 20 % low, and the answer depends on exactly where the grid falls</td></tr>
+          <tr><td>8–16</td><td>within about ±1–3 % of the right flow</td></tr>
+        </table>
+        <p class="caption" style="margin-top:2mm">Finer grids make openings more accurate, but each step finer is much slower. That trade-off is what the quality levels below choose for you.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Quality levels -->
+  <div class="section">
+    <h2>Quality levels <small>pick one and stay on it</small></h2>
+    <div class="strip">
+      <div class="q">
+        <svg viewBox="0 0 48 48"><rect x="1" y="1" width="46" height="46" fill="none" stroke="#1F1E1D" stroke-width="1"/><path d="M24,1 V47 M1,24 H47" stroke="#9A9792" stroke-width=".8"/></svg>
+        <div class="nm">Preview</div>
+        <div class="tm">seconds to a minute</div>
+        <div class="tx">Coarse cubes. Shows the direction of flow only.</div>
+      </div>
+      <div class="q">
+        <svg viewBox="0 0 48 48"><rect x="1" y="1" width="46" height="46" fill="none" stroke="#1F1E1D" stroke-width="1"/><path d="M12.5,1 V47 M24,1 V47 M35.5,1 V47 M1,12.5 H47 M1,24 H47 M1,35.5 H47" stroke="#9A9792" stroke-width=".8"/></svg>
+        <div class="nm">Standard</div>
+        <div class="tm">about 10 min</div>
+        <div class="tx">About 170 mm cubes on a typical house. <em>Fine detail settles in 30–50 min.</em></div>
+      </div>
+      <div class="q">
+        <svg viewBox="0 0 48 48"><rect x="1" y="1" width="46" height="46" fill="none" stroke="#1F1E1D" stroke-width="1"/><path d="M8.7,1 V47 M16.3,1 V47 M24,1 V47 M31.7,1 V47 M39.3,1 V47 M1,8.7 H47 M1,16.3 H47 M1,24 H47 M1,31.7 H47 M1,39.3 H47" stroke="#9A9792" stroke-width=".7"/><path d="M3,30 C 10,30 12,24 19,24 S 30,34 45,33" fill="none" stroke="#2F6FDB" stroke-width="1.3"/><path d="M3,14 C 9,14 12,10 19,10 S 32,18 45,16" fill="none" stroke="#2F6FDB" stroke-width="1.3"/></svg>
+        <div class="nm">High</div>
+        <div class="tm">5–30 min</div>
+        <div class="tx">Gusty wind, as on a real site, not a steady breeze.</div>
+      </div>
+      <div class="q">
+        <svg viewBox="0 0 48 48"><rect x="1" y="1" width="46" height="46" fill="none" stroke="#1F1E1D" stroke-width="1"/><path d="M6.75,1 V47 M12.5,1 V47 M18.25,1 V47 M24,1 V47 M29.75,1 V47 M35.5,1 V47 M41.25,1 V47 M1,6.75 H47 M1,12.5 H47 M1,18.25 H47 M1,24 H47 M1,29.75 H47 M1,35.5 H47 M1,41.25 H47" stroke="#9A9792" stroke-width=".6"/></svg>
+        <div class="nm">Ultra</div>
+        <div class="tm">6–24 h</div>
+        <div class="tx">The finest grid your GPU fits, aiming at 16 cubes across the narrowest window. Saves progress and can resume. <em>New; not separately validated.</em></div>
+      </div>
+    </div>
+    <p class="caption">Figure 5 · Each level cuts the building into smaller cubes than the one before. The numbers change with the cube size, so <b>never compare numbers across levels</b>.</p>
+  </div>
+
+  <!-- 7. Limits -->
+  <div class="section">
+    <h2>What to keep in mind</h2>
+    <div class="limits">
+      <div class="l">
+        <svg viewBox="0 0 40 40"><line x1="2" y1="30" x2="38" y2="30" stroke="#1F1E1D" stroke-width="1.2"/><g stroke="#2F6FDB" stroke-width="1.2" fill="none" stroke-linecap="round"><line x1="6" y1="10" x2="30" y2="10"/><line x1="6" y1="16" x2="24" y2="16"/><line x1="6" y1="22" x2="16" y2="22"/><line x1="6" y1="27" x2="10" y2="27" stroke="#9A9792"/></g></svg>
+        <div><span class="t">The ground is smooth</span><span class="x">Wind near the ground is too weak: about 54 % under the Eurocode profile at 1&nbsp;m.</span></div>
+      </div>
+      <div class="l">
+        <svg viewBox="0 0 40 40"><rect x="4" y="6" width="32" height="28" fill="none" stroke="#9A9792" stroke-width="1" stroke-dasharray="2 2"/><path d="M12,30 L20,22 L28,30 Z M13,30 V34 H27 V30" fill="none" stroke="#1F1E1D" stroke-width="1.2" stroke-linejoin="round"/><g stroke="#2F6FDB" stroke-width="1.1" fill="none"><path d="M6,14 H34"/><path d="M6,18 H34"/></g></svg>
+        <div><span class="t">The compact outdoor area crowds the building</span><span class="x">Flows read about 11–14 % high. Use <b>Full</b> for a final check.</span></div>
+      </div>
+      <div class="l">
+        <svg viewBox="0 0 40 40"><rect x="17" y="4" width="6" height="32" fill="#ECEAE6" stroke="#1F1E1D" stroke-width="1.2"/><g stroke="#9A9792" stroke-width="1.2" stroke-linecap="round" fill="none"><path d="M5,20 H14"/><path d="M26,20 H35"/></g><line x1="12" y1="12" x2="28" y2="28" stroke="#1F1E1D" stroke-width="1.1"/></svg>
+        <div><span class="t">Walls do not conduct heat</span><span class="x">No U-values; walls, floors and glazing are adiabatic.</span></div>
+      </div>
+      <div class="l">
+        <svg viewBox="0 0 40 40"><rect x="8" y="26" width="24" height="8" fill="none" stroke="#1F1E1D" stroke-width="1.2"/><g stroke="#9A9792" stroke-width="1.1" fill="none" stroke-linecap="round"><path d="M14,22 c0,-3 3,-3 3,-6 s-3,-3 -3,-6"/><path d="M23,22 c0,-3 3,-3 3,-6 s-3,-3 -3,-6"/></g></svg>
+        <div><span class="t">Small heat sources under‑stratify</span><span class="x">Warm air from a small source does not layer as strongly as it would in reality.</span></div>
+      </div>
+      <div class="l">
+        <svg viewBox="0 0 40 40"><path d="M4,32 L14,8 L24,32 Z" fill="none" stroke="#9A9792" stroke-width="1"/><path d="M14,8 L30,20 L24,32" fill="none" stroke="#9A9792" stroke-width="1"/><path d="M8,30 L18,14 L30,20" fill="none" stroke="#9A9792" stroke-width=".8"/><rect x="26" y="6" width="10" height="10" fill="none" stroke="#2F6FDB" stroke-width="1.2"/></svg>
+        <div><span class="t">Imported meshes read higher</span><span class="x">Total exchange is 37–45 % higher than the same building drawn in the app. Compare imported with imported.</span></div>
+      </div>
+      <div class="l">
+        <svg viewBox="0 0 40 40"><path d="M6,30 L16,10 L26,30 Z M5,34 H27" fill="none" stroke="#1F1E1D" stroke-width="1.2" stroke-linejoin="round"/><path d="M30,8 L36,14 M36,8 L30,14" stroke="#9A9792" stroke-width="1.3" stroke-linecap="round"/><text x="16" y="27" text-anchor="middle" font-size="7" fill="#9A9792">?</text></svg>
+        <div><span class="t">Not yet checked against a measured building</span><span class="x">Benchmarks are lab cases and published studies, not a real occupied building.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="closing">
+    <p style="margin-bottom:1.2mm"><b>Full method, equations and every benchmark:</b> WindFlow Technical Reference.</p>
+    <p style="margin:0">WindFlow is a design-stage tool. Its results are estimates with stated uncertainty, not a substitute for a ventilation engineer or a code-compliance calculation.</p>
+  </div>
+
+  <div class="runfoot">Page 2 of 2</div>
+</section>
+
+</body>
+</html>

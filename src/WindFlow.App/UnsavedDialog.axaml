@@ -1,0 +1,20 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="WindFlow.App.UnsavedDialog"
+        Title="Unsaved changes"
+        Width="420" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource Panel}"
+        FontFamily="Inter, Segoe UI Variable Text, Segoe UI"
+        RequestedThemeVariant="Dark">
+  <StackPanel Margin="20" Spacing="12">
+    <TextBlock Classes="section" Text="UNSAVED CHANGES" />
+    <TextBlock x:Name="MessageText" Classes="rowSub" TextWrapping="Wrap" />
+    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" Margin="0,6,0,0">
+      <Button Classes="tool" Content="Cancel" Click="OnCancel" />
+      <Button Classes="tool" Content="Discard" Click="OnDiscard" />
+      <Button Classes="tool accent" Content="Save model…" Click="OnSave" IsDefault="True" />
+    </StackPanel>
+  </StackPanel>
+</Window>

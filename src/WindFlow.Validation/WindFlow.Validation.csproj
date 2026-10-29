@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Measured-room validation harness (PLAN_V2 step 1.4). No NuGet packages: WPF (in the Windows desktop
+       SDK, same as WindFlow.Sandbox) draws the PNG profile plots, System.Text.Json writes metrics.json. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WindFlow.Core\WindFlow.Core.csproj" />
+    <!-- WPF's implicit usings leave System.IO out -->
+    <Using Include="System.IO" />
+  </ItemGroup>
+</Project>

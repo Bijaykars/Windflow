@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Solver engine: no Revit, no dependencies. Revit, a CLI or an ML pipeline all drive it through Simulation.Run. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="ILGPU" Version="1.5.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Sandbox check 58 (orifice Cd) sets the lattice velocity scale through the internal LbmSession ctor. -->
+    <InternalsVisibleTo Include="WindFlow.Sandbox" />
+    <InternalsVisibleTo Include="WindFlow.App" />
+    <!-- Validation case tracer-tb16 drives the online scalar with a point source (LbmSession.StartOnlineScalar). -->
+    <InternalsVisibleTo Include="WindFlow.Validation" />
+  </ItemGroup>
+</Project>

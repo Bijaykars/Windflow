@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Revit 2026 add-in: thin exporter. Extracts a BuildingModel and hands it to the standalone WindFlow.App
+       (WindFlow.Core.BuildingModel.ToJson), either as a saved file or a direct launch. No in-Revit rendering. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PlatformTarget>x64</PlatformTarget>
+    <RootNamespace>WindFlow.Revit</RootNamespace>
+    <RevitDir Condition="'$(RevitDir)' == ''">C:\Program Files\Autodesk\Revit 2026\</RevitDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="RevitAPI">
+      <HintPath>$(RevitDir)RevitAPI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="RevitAPIUI">
+      <HintPath>$(RevitDir)RevitAPIUI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Silences MSB3277: RevitAPI references WindowsDesktop assemblies (System.Drawing, Microsoft.VisualBasic). -->
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App" />
+    <ProjectReference Include="..\WindFlow.Core\WindFlow.Core.csproj" />
+    <None Update="WindFlow.addin" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Opt-in: dotnet build -p:DeployToRevit=true -->
+  <Target Name="DeployToRevit" AfterTargets="Build" Condition="'$(DeployToRevit)' == 'true'">
+    <PropertyGroup>
+      <RevitAddinsDir>$(APPDATA)\Autodesk\Revit\Addins\2026\</RevitAddinsDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <!-- Everything built, not a fixed list: Core now ships ILGPU's assemblies too. -->
+      <WindFlowDeploy Include="$(OutDir)*.dll;$(OutDir)*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(WindFlowDeploy)" DestinationFolder="$(RevitAddinsDir)WindFlow\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\WindFlow.addin" DestinationFolder="$(RevitAddinsDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\THIRD-PARTY-NOTICES.txt" DestinationFolder="$(RevitAddinsDir)WindFlow\" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

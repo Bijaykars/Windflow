@@ -1,0 +1,18 @@
+bin/
+obj/
+out/
+.vs/
+*.user
+.snapshots/
+
+# kept local, not published
+.claude/
+audits/
+*_PROMPT.md
+*PROMPT*.md
+REDESIGN_NOTES.md
+docs/TECHNICAL_REFERENCE.pdf
+docs/TECHNICAL_REFERENCE.original.md
+media/*discard*
+media/snowdon*
+media/windflow-demo.mp4

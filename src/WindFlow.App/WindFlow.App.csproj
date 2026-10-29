@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Standalone desktop app: Avalonia shell + own Direct3D 12 viewport. Windows x64 only. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <Platforms>x64;AnyCPU</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\windflow.ico</ApplicationIcon>
+    <AssemblyName>WindFlow.App</AssemblyName>
+    <RootNamespace>WindFlow.App</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- WindFlow.Viz/Report are WPF libraries (BitmapSource, DrawingVisual). Referencing them needs the WPF
+         framework here too; Avalonia and WPF coexist because no WPF window is ever created. -->
+    <UseWPF>true</UseWPF>
+    <!-- WPF would otherwise implicitly import System.Windows.* and shadow Path/Point/Size/Brush. -->
+    <DisableImplicitNamespaceImports_WindowsDesktop>true</DisableImplicitNamespaceImports_WindowsDesktop>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+    <Version>0.2.0</Version>
+    <AssemblyVersion>0.2.0.0</AssemblyVersion>
+    <FileVersion>0.2.0.0</FileVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.2" />
+    <PackageReference Include="Silk.NET.Assimp" Version="2.23.0" />
+    <PackageReference Include="Vortice.Direct3D12" Version="3.8.3" />
+    <PackageReference Include="Vortice.DXGI" Version="3.8.3" />
+    <PackageReference Include="Vortice.D3DCompiler" Version="3.8.3" />
+    <PackageReference Include="Vortice.MediaFoundation" Version="3.8.3" />
+    <PackageReference Include="Velopack" Version="1.2.158" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- S5-01: the licence notices travel with the exe (build output and publish output, so pack.ps1 packages them). -->
+    <None Include="..\..\THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <!-- RA-40: WindFlow's own licence (AGPL v3) travels with the exe too. -->
+    <None Include="..\..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <!-- the designed 2-page "How WindFlow works" explainer travels with the exe (the method-pdf option copies it; Settings opens it). -->
+    <None Include="..\..\docs\how-windflow-works.pdf" Link="how-windflow-works.pdf" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- the same icon for the exe (ApplicationIcon) and the window title bar / taskbar (MainWindow Icon) -->
+    <AvaloniaResource Include="Assets\windflow.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WindFlow.Core\WindFlow.Core.csproj" />
+    <ProjectReference Include="..\WindFlow.Viz\WindFlow.Viz.csproj" />
+    <ProjectReference Include="..\WindFlow.Report\WindFlow.Report.csproj" />
+  </ItemGroup>
+</Project>

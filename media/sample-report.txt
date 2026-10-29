@@ -1,0 +1,7 @@
+source    live analysis
+path      E:\Website_designs\WindFlow_room_simulation\media\sample-report.pdf
+images    3 (plan L1 at 1.1 m, plan L2 at 4.3 m, section)
+size      1,232,209 bytes (1,203 kB), over 50 kB: True
+pages     6 (byte scan for /Type /Page)
+dialog    E:\Website_designs\WindFlow_room_simulation\media\app-report-dialog.png
+scenario  wind 4.0 m/s from 270° (W), 12 of 16 openings open

@@ -1,0 +1,463 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="WindFlow.App.App"
+             RequestedThemeVariant="Dark">
+
+  <!-- Design tokens. One accent, one text colour, two surfaces: everything else is spacing. -->
+  <Application.Resources>
+    <SolidColorBrush x:Key="Canvas">#0A0D12</SolidColorBrush>
+    <SolidColorBrush x:Key="Panel">#0D131B</SolidColorBrush>
+    <SolidColorBrush x:Key="Surface">#151E29</SolidColorBrush>
+    <SolidColorBrush x:Key="SurfaceHover">#1F2C3B</SolidColorBrush>
+    <SolidColorBrush x:Key="SurfacePressed">#27374A</SolidColorBrush>
+    <SolidColorBrush x:Key="Accent">#4DB8FF</SolidColorBrush>
+    <SolidColorBrush x:Key="AccentDim">#1B3D5E</SolidColorBrush>
+    <SolidColorBrush x:Key="Text">#E9EEF6</SolidColorBrush>
+    <SolidColorBrush x:Key="TextMuted">#75839A</SolidColorBrush>
+    <SolidColorBrush x:Key="Divider">#18212D</SolidColorBrush>
+    <SolidColorBrush x:Key="Warning">#E0736A</SolidColorBrush>
+  </Application.Resources>
+
+  <Application.Styles>
+    <FluentTheme />
+
+    <Style Selector="Button.tool">
+      <Setter Property="Template">
+        <ControlTemplate TargetType="Button">
+          <Border Background="{TemplateBinding Background}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+            <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Setter Property="Background" Value="{DynamicResource Surface}" />
+      <Setter Property="Foreground" Value="{DynamicResource Text}" />
+      <Setter Property="Padding" Value="15,7" />
+      <Setter Property="FontSize" Value="12.5" />
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.tool:pointerover">
+      <Setter Property="Background" Value="{DynamicResource SurfaceHover}" />
+    </Style>
+    <Style Selector="Button.tool:pressed">
+      <Setter Property="Background" Value="{DynamicResource SurfacePressed}" />
+    </Style>
+    <Style Selector="Button.tool:disabled">
+      <Setter Property="Opacity" Value="0.32" />
+    </Style>
+
+    <Style Selector="ToggleButton.tool">
+      <Setter Property="Template">
+        <ControlTemplate TargetType="ToggleButton">
+          <Border Background="{TemplateBinding Background}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+            <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Setter Property="Background" Value="{DynamicResource Surface}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+      <Setter Property="Padding" Value="15,7" />
+      <Setter Property="FontSize" Value="12.5" />
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="ToggleButton.tool:pointerover">
+      <Setter Property="Background" Value="{DynamicResource SurfaceHover}" />
+      <Setter Property="Foreground" Value="{DynamicResource Text}" />
+    </Style>
+    <Style Selector="ToggleButton.tool:checked">
+      <Setter Property="Background" Value="#14304A" />
+      <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+    </Style>
+    <Style Selector="ToggleButton.tool:checked:pointerover">
+      <Setter Property="Background" Value="#1B3D5E" />
+    </Style>
+
+    <!-- keyboard focus: a 1.5 px accent ring, as a shadow so nothing shifts -->
+    <Style Selector="Button.tool:focus-visible /template/ Border, ToggleButton.tool:focus-visible /template/ Border, Button.link:focus-visible /template/ Border, ToggleButton.link:focus-visible /template/ Border">
+      <Setter Property="BoxShadow" Value="0 0 0 1.5 #4DB8FF" />
+    </Style>
+    <!-- Room isolate chip: reads as an active view state (the checked-toggle colours), not as a command -->
+    <Style Selector="Button.tool.isolate">
+      <Setter Property="Background" Value="#14304A" />
+      <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="Button.tool.isolate:pointerover">
+      <Setter Property="Background" Value="#1B3D5E" />
+    </Style>
+
+    <Style Selector="ToggleButton.seg">
+      <Setter Property="Padding" Value="11,7" />
+      <Setter Property="Margin" Value="-4,0,0,0" />
+    </Style>
+
+    <!-- the Run button is the one call to action -->
+    <Style Selector="Button.accent">
+      <Setter Property="Background" Value="#17415F" />
+      <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+    </Style>
+    <Style Selector="Button.accent:pointerover">
+      <Setter Property="Background" Value="#1E5480" />
+    </Style>
+
+    <Style Selector="TextBlock.label">
+      <Setter Property="FontSize" Value="10" />
+      <Setter Property="LetterSpacing" Value="1.4" />
+      <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Margin" Value="6,0,0,0" />
+    </Style>
+    <Style Selector="TextBlock.unit">
+      <Setter Property="FontSize" Value="11.5" />
+      <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="TextBox.field">
+      <Setter Property="Background" Value="{DynamicResource Surface}" />
+      <Setter Property="Foreground" Value="{DynamicResource Text}" />
+      <Setter Property="CaretBrush" Value="{DynamicResource Accent}" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="FontSize" Value="12.5" />
+      <Setter Property="Padding" Value="8,4" />
+      <Setter Property="MinHeight" Value="28" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+
+    <!-- NumInput.Mark: a typed number that was refused (S3-08); the box keeps its last valid value -->
+    <Style Selector="TextBox.field.invalid">
+      <Setter Property="Foreground" Value="{DynamicResource Warning}" />
+    </Style>
+    <Style Selector="TextBox.field.invalid /template/ Border#PART_BorderElement">
+      <Setter Property="BorderBrush" Value="{DynamicResource Warning}" />
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <Style Selector="Border.sep">
+      <Setter Property="Width" Value="1" />
+      <Setter Property="Height" Value="18" />
+      <Setter Property="Margin" Value="4,0" />
+      <Setter Property="Background" Value="{DynamicResource Divider}" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="TextBlock.section">
+      <Setter Property="FontSize" Value="10" />
+      <Setter Property="LetterSpacing" Value="1.6" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="#7F8DA3" />
+    </Style>
+    <Style Selector="TextBlock.rowName">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Foreground" Value="{DynamicResource Text}" />
+      <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+    <Style Selector="TextBlock.rowSub">
+      <Setter Property="FontSize" Value="10.5" />
+      <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+      <Setter Property="Margin" Value="0,1,0,0" />
+    </Style>
+    <Style Selector="TextBlock.rowValue">
+      <Setter Property="FontSize" Value="12.5" />
+      <Setter Property="Foreground" Value="{DynamicResource Text}" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Margin" Value="8,0,0,0" />
+    </Style>
+    <Style Selector="Border.row">
+      <Setter Property="Background" Value="#111A24" />
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="Padding" Value="9,7" />
+      <Setter Property="Margin" Value="0,0,0,4" />
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Border.row:pointerover">
+      <Setter Property="Background" Value="#18242F" />
+    </Style>
+    <!-- Selected row: the same violet as the room volume / opening quad in the viewport, so row and 3D read as one. -->
+    <Style Selector="Border.row.selected">
+      <Setter Property="Background" Value="#1D1B2B" />
+      <Setter Property="BoxShadow" Value="inset 2 0 0 0 #E08CFF" />
+    </Style>
+    <Style Selector="TextBox.rename">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Padding" Value="5,1" />
+      <Setter Property="MinHeight" Value="22" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="CornerRadius" Value="4" />
+    </Style>
+    <Style Selector="Border.switch">
+      <Setter Property="Background" Value="#34222A" />
+    </Style>
+    <Style Selector="Border.switch.on">
+      <Setter Property="Background" Value="#1B3D5E" />
+    </Style>
+    <Style Selector="Button.small, ToggleButton.small">
+      <Setter Property="Padding" Value="10,5" />
+      <Setter Property="FontSize" Value="11.5" />
+    </Style>
+
+    <Style Selector="Slider">
+      <Setter Property="MinHeight" Value="20" />
+      <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+    </Style>
+
+    <!-- device palette tiles: icon over name, muted until armed for placement -->
+    <Style Selector="Button.tool.tile">
+      <Setter Property="Padding" Value="4,8,4,7" />
+      <Setter Property="Margin" Value="0,0,5,5" />
+      <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="VerticalAlignment" Value="Stretch" />
+    </Style>
+    <Style Selector="Button.tool.tile Path">
+      <Setter Property="Stroke" Value="{DynamicResource TextMuted}" />
+    </Style>
+    <Style Selector="Button.tool.tile:pointerover">
+      <Setter Property="Foreground" Value="{DynamicResource Text}" />
+    </Style>
+    <Style Selector="Button.tool.tile:pointerover Path">
+      <Setter Property="Stroke" Value="{DynamicResource Text}" />
+    </Style>
+    <Style Selector="Button.tool.tile.placing">
+      <Setter Property="Background" Value="{DynamicResource AccentDim}" />
+      <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+    </Style>
+    <Style Selector="Button.tool.tile.placing Path">
+      <Setter Property="Stroke" Value="{DynamicResource Accent}" />
+    </Style>
+
+    <!-- icon glyphs (gear, lock) from the Windows icon font, not emoji -->
+    <Style Selector="TextBlock.glyph">
+      <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- Lock: once locked it reads as a state, in the one warm colour the shell uses for "careful" -->
+    <Style Selector="ToggleButton.lock:checked">
+      <Setter Property="Background" Value="#33291A" />
+      <Setter Property="Foreground" Value="#F0C27A" />
+    </Style>
+    <Style Selector="ToggleButton.lock:checked:pointerover">
+      <Setter Property="Background" Value="#3F3220" />
+    </Style>
+    <Style Selector="Button.tool:disabled, ToggleButton.tool:disabled">
+      <Setter Property="Opacity" Value="0.32" />
+    </Style>
+    <Style Selector="TextBox.field:disabled">
+      <Setter Property="Opacity" Value="0.4" />
+    </Style>
+
+    <!-- Section picker: the dark panel's one drop-down. Fluent's own brushes, swapped for the tokens. -->
+    <Style Selector="ComboBox.picker">
+      <Style.Resources>
+        <SolidColorBrush x:Key="ComboBoxBackground" Color="#151E29" />
+        <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#1F2C3B" />
+        <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#27374A" />
+        <SolidColorBrush x:Key="ComboBoxBackgroundFocused" Color="#151E29" />
+        <SolidColorBrush x:Key="ComboBoxBackgroundFocusedPressed" Color="#27374A" />
+        <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#18212D" />
+        <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#75839A" />
+        <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="#4DB8FF" />
+        <SolidColorBrush x:Key="ComboBoxBorderBrushFocused" Color="#4DB8FF" />
+        <SolidColorBrush x:Key="ComboBoxForeground" Color="#E9EEF6" />
+        <SolidColorBrush x:Key="ComboBoxForegroundPointerOver" Color="#E9EEF6" />
+        <SolidColorBrush x:Key="ComboBoxForegroundPressed" Color="#E9EEF6" />
+        <SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="#E9EEF6" />
+        <SolidColorBrush x:Key="ComboBoxDropDownGlyphForeground" Color="#4DB8FF" />
+        <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="#151E29" />
+        <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="#27374A" />
+      </Style.Resources>
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Padding" Value="12,7" />
+      <Setter Property="MinHeight" Value="34" />
+      <Setter Property="CornerRadius" Value="7" />
+    </Style>
+    <Style Selector="ComboBox.picker ComboBoxItem">
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="Foreground" Value="{DynamicResource Text}" />
+      <Setter Property="Padding" Value="12,7" />
+    </Style>
+    <Style Selector="ComboBox.picker ComboBoxItem:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource SurfaceHover}" />
+      <Setter Property="Foreground" Value="{DynamicResource Text}" />
+    </Style>
+    <Style Selector="ComboBox.picker ComboBoxItem:selected /template/ ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource AccentDim}" />
+      <Setter Property="Foreground" Value="{DynamicResource Text}" />
+    </Style>
+
+    <!-- quiet text buttons: "for air quality", "2 notes", "Open log folder" -->
+    <Style Selector="ToggleButton.link, Button.link">
+      <Setter Property="Template">
+        <ControlTemplate TargetType="ContentControl">
+          <Border Background="Transparent" Padding="{TemplateBinding Padding}">
+            <ContentPresenter Content="{TemplateBinding Content}" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Foreground" Value="#8FA3BD" />
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="ToggleButton.link:pointerover, Button.link:pointerover">
+      <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+    </Style>
+
+    <Style Selector="TextBlock.colHead">
+      <Setter Property="FontSize" Value="9.5" />
+      <Setter Property="LetterSpacing" Value="1" />
+      <Setter Property="Foreground" Value="#7F8DA3" />
+      <Setter Property="TextAlignment" Value="Right" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBlock.rowValue.muted">
+      <Setter Property="Foreground" Value="#A7B3C4" />
+      <Setter Property="FontSize" Value="11.5" />
+    </Style>
+
+    <!-- row tags: neutral (uneven, off) and warm (stuffy, draughty, cut, coarse) -->
+    <Style Selector="Border.chip">
+      <Setter Property="Background" Value="#233042" />
+      <Setter Property="CornerRadius" Value="3" />
+      <Setter Property="Padding" Value="4,1" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Border.chip > TextBlock">
+      <Setter Property="FontSize" Value="9.5" />
+      <Setter Property="Foreground" Value="#9FB0C6" />
+    </Style>
+    <Style Selector="Border.chip.warm">
+      <Setter Property="Background" Value="#3A2F1E" />
+    </Style>
+    <Style Selector="Border.chip.warm > TextBlock">
+      <Setter Property="Foreground" Value="#E0B162" />
+    </Style>
+    <!-- a chip that does something on click (refine needed: box the device) -->
+    <Style Selector="Border.chip.action">
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Border.chip.action > TextBlock">
+      <Setter Property="TextDecorations" Value="Underline" />
+    </Style>
+    <!-- Preview / Accurate: provisional numbers are quieter; the bar breathes while a pass works -->
+    <Style Selector="TextBlock.rowValue.provisional">
+      <Setter Property="Foreground" Value="#7F8BA0" />
+    </Style>
+    <Style Selector="Border.chip.pass">
+      <Setter Property="Background" Value="#1C2533" />
+    </Style>
+    <Style Selector="Border.chip.pass > TextBlock">
+      <Setter Property="FontSize" Value="9" />
+      <Setter Property="LetterSpacing" Value="1.1" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="#8FA3BD" />
+    </Style>
+    <Style Selector="Border.chip.pass.done">
+      <Setter Property="Background" Value="#173328" />
+    </Style>
+    <Style Selector="Border.chip.pass.done > TextBlock">
+      <Setter Property="Foreground" Value="#5AD19A" />
+    </Style>
+    <!-- a pass that landed on its time budget, not on settled ranges: the warm chip colours, never the green -->
+    <Style Selector="Border.chip.pass.done.capped">
+      <Setter Property="Background" Value="#3A2F1E" />
+    </Style>
+    <Style Selector="Border.chip.pass.done.capped > TextBlock">
+      <Setter Property="Foreground" Value="#E0B162" />
+    </Style>
+    <Style Selector="Border.passFill">
+      <Setter Property="Background" Value="{DynamicResource Accent}" />
+    </Style>
+    <Style Selector="Border.passFill.working">
+      <Style.Animations>
+        <Animation Duration="0:0:1.8" IterationCount="Infinite" PlaybackDirection="Alternate" Easing="SineEaseInOut">
+          <KeyFrame Cue="0%">
+            <Setter Property="Opacity" Value="0.5" />
+          </KeyFrame>
+          <KeyFrame Cue="100%">
+            <Setter Property="Opacity" Value="1" />
+          </KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+    <Style Selector="Border.passFill.done">
+      <Setter Property="Background" Value="#5AD19A" />
+    </Style>
+    <Style Selector="Border.passFill.done.capped">
+      <Setter Property="Background" Value="#E0B162" />
+    </Style>
+    <Style Selector="Border.switch.locked">
+      <Setter Property="Opacity" Value="0.4" />
+      <Setter Property="Cursor" Value="No" />
+    </Style>
+
+    <!-- Rooms outliner: a room's openings as indented, quieter child rows -->
+    <Style Selector="Border.row.child">
+      <Setter Property="Margin" Value="20,0,0,3" />
+      <Setter Property="MinHeight" Value="26" />
+      <Setter Property="Padding" Value="9,2" />
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Border.row.child:pointerover">
+      <Setter Property="Background" Value="#18242F" />
+    </Style>
+    <Style Selector="Button.link.caret">
+      <Setter Property="Foreground" Value="#7F8DA3" />
+      <Setter Property="FontSize" Value="10" />
+      <Setter Property="Padding" Value="4,6" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <!-- row ×: hidden until the row is selected or under the pointer, and not hittable while hidden -->
+    <Style Selector="Button.link.del">
+      <Setter Property="Opacity" Value="0" />
+      <Setter Property="IsHitTestVisible" Value="False" />
+      <Setter Property="Foreground" Value="#8FA3BD" />
+    </Style>
+    <Style Selector="Border.row:pointerover Button.link.del, Button.link.del.shown">
+      <Setter Property="Opacity" Value="1" />
+      <Setter Property="IsHitTestVisible" Value="True" />
+    </Style>
+    <Style Selector="Button.link.del:pointerover">
+      <Setter Property="Foreground" Value="{DynamicResource Warning}" />
+    </Style>
+    <!-- Add opening while armed: the device tile's placing colours -->
+    <Style Selector="Button.tool.placing">
+      <Setter Property="Background" Value="{DynamicResource AccentDim}" />
+      <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+    </Style>
+    <!-- the inspector's Delete: the one warm action in the panel -->
+    <Style Selector="Button.tool.danger">
+      <Setter Property="Foreground" Value="{DynamicResource Warning}" />
+    </Style>
+    <!-- the inspector: pinned under the list, a divider above, the panel's own margins -->
+    <Style Selector="Border.inspector">
+      <Setter Property="BorderBrush" Value="{DynamicResource Divider}" />
+      <Setter Property="BorderThickness" Value="0,1,0,0" />
+      <Setter Property="Padding" Value="18,12,14,14" />
+    </Style>
+    <Style Selector="Border.row.figure">
+      <Setter Property="Padding" Value="10,7" />
+      <Setter Property="Margin" Value="0" />
+      <Setter Property="Cursor" Value="Arrow" />
+    </Style>
+    <Style Selector="Border.row.figure:pointerover">
+      <Setter Property="Background" Value="#111A24" />
+    </Style>
+    <Style Selector="TextBlock.figure">
+      <Setter Property="FontSize" Value="16" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource Text}" />
+      <Setter Property="VerticalAlignment" Value="Bottom" />
+    </Style>
+    <Style Selector="TextBlock.figureUnit">
+      <Setter Property="FontSize" Value="10.5" />
+      <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+      <Setter Property="VerticalAlignment" Value="Bottom" />
+      <Setter Property="Margin" Value="0,0,0,2" />
+    </Style>
+  </Application.Styles>
+</Application>

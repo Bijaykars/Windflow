@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>WindFlow</Name>
+    <Assembly>WindFlow\WindFlow.Revit.dll</Assembly>
+    <AddInId>6E1B7C42-3D9A-4F58-B2E6-8A4C1D0F9E37</AddInId>
+    <FullClassName>WindFlow.Revit.App</FullClassName>
+    <VendorId>WindFlow</VendorId>
+    <VendorDescription>WindFlow natural ventilation airflow</VendorDescription>
+  </AddIn>
+</RevitAddIns>

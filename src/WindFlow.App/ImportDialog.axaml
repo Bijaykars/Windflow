@@ -1,0 +1,55 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="WindFlow.App.ImportDialog"
+        Title="Import geometry"
+        Width="470" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource Panel}"
+        FontFamily="Inter, Segoe UI Variable Text, Segoe UI"
+        RequestedThemeVariant="Dark">
+  <StackPanel Margin="20" Spacing="9">
+    <TextBlock Classes="section" Text="IMPORT GEOMETRY" />
+    <TextBlock x:Name="FileText" Classes="rowName" Text="" TextTrimming="CharacterEllipsis" />
+    <TextBlock x:Name="CountsText" Classes="rowSub" Text="" TextWrapping="Wrap" />
+
+    <!-- units, with the bounding box in metres updating as you change them -->
+    <TextBlock Classes="label" Text="UNITS IN THE FILE" />
+    <StackPanel Orientation="Horizontal" Spacing="8">
+      <ComboBox x:Name="UnitBox" Width="150" SelectionChanged="OnSettingChanged" />
+      <TextBlock x:Name="GuessText" Classes="rowSub" VerticalAlignment="Center" Text="" />
+    </StackPanel>
+    <Border Classes="row">
+      <StackPanel Spacing="2">
+        <TextBlock Classes="label" Text="BOUNDING BOX, METRES" />
+        <TextBlock x:Name="BoundsText" Classes="rowName" Text="" />
+        <TextBlock x:Name="BoundsHint" Classes="rowSub" TextWrapping="Wrap" Text="" />
+      </StackPanel>
+    </Border>
+
+    <CheckBox x:Name="YUpBox" Content="File is Y-up (rotate to Z-up)" Click="OnSettingChanged"
+              ToolTip.Tip="glTF is Y-up by specification; FBX and OBJ are Y-up by convention. STL and DAE vary, so this is off for them by default." />
+
+    <TextBlock Classes="label" Text="STOREYS" />
+    <TextBlock x:Name="StoreyHint" Classes="rowSub" TextWrapping="Wrap" Text="" />
+    <TextBox x:Name="StoreyBox" Classes="field" HorizontalContentAlignment="Left" Padding="9,5"
+             AcceptsReturn="True" Height="66" TextWrapping="Wrap"
+             ToolTip.Tip="One storey per line: elevation, height — both in metres above the model's own floor. Clear the box for a single storey covering the full height." />
+
+    <CheckBox x:Name="DetectBox" Content="Detect rooms and openings on the voxel grid" IsChecked="True"
+              ToolTip.Tip="Voxelise the model, find the air that cannot be reached from outside, and turn each connected region at 1.1 m into a room. Rooms are statistics only: outlines follow the voxel grid." />
+
+    <CheckBox x:Name="PaneBox" Content="Remove glass panes (transparent materials)" IsChecked="True"
+              ToolTip.Tip="Drops transparent and window/glass-named materials so a window is a real hole. Opaque doors stay as modelled; open or add them in the Openings panel. Meshes are merged per material on import, so a glass material shared by a curtain wall and windows is removed as a whole." />
+
+    <Border Classes="row" Background="#2A2318">
+      <TextBlock Classes="rowSub" TextWrapping="Wrap" Foreground="{StaticResource Warning}"
+                 Text="A mesh file carries triangles and nothing else. Openings are found as holes in the walls and classified as door, window or vent by size and sill height; glass panes are removed by their transparent material (see the box below), but a closed opaque door or a pane with an opaque material is not a hole and is not found. Storeys are guessed from flat slab-like surfaces; rooms, if detected, are named Room 1, Room 2, … Detected rooms can read total air exchange about 40 % higher than the same building drawn by hand; compare imported models with each other, not with drawn ones." />
+    </Border>
+
+    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" Margin="0,4,0,0">
+      <Button Classes="tool" Content="Cancel" Click="OnCancel" />
+      <Button Classes="tool accent" Content="Import" Click="OnImport" />
+    </StackPanel>
+  </StackPanel>
+</Window>

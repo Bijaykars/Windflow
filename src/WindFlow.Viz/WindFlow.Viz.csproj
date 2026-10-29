@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 2D report images (plan slices, vertical sections). WPF drawing gives anti-aliasing and text for free.
+       Shared by the Revit window and the sandbox; no Revit types here. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WindFlow.Core\WindFlow.Core.csproj" />
+  </ItemGroup>
+</Project>

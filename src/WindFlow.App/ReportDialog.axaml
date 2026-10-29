@@ -1,0 +1,28 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="WindFlow.App.ReportDialog"
+        Title="PDF report"
+        Width="400" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource Panel}"
+        FontFamily="Inter, Segoe UI Variable Text, Segoe UI"
+        RequestedThemeVariant="Dark">
+  <StackPanel Margin="20" Spacing="10">
+    <TextBlock Classes="section" Text="REPORT DETAILS" />
+    <TextBlock Classes="rowSub" TextWrapping="Wrap"
+               Text="These three lines head the PDF. Everything else comes from the run." />
+
+    <TextBlock Classes="label" Text="PROJECT" />
+    <TextBox x:Name="ProjectBox" Classes="field" HorizontalContentAlignment="Left" Padding="9,5" />
+    <TextBlock Classes="label" Text="AUTHOR" />
+    <TextBox x:Name="AuthorBox" Classes="field" HorizontalContentAlignment="Left" Padding="9,5" />
+    <TextBlock Classes="label" Text="SCENARIO" />
+    <TextBox x:Name="ScenarioBox" Classes="field" HorizontalContentAlignment="Left" Padding="9,5" />
+
+    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" Margin="0,6,0,0">
+      <Button Classes="tool" Content="Cancel" Click="OnCancel" />
+      <Button Classes="tool accent" Content="Export…" Click="OnExport" IsDefault="True" />
+    </StackPanel>
+  </StackPanel>
+</Window>
