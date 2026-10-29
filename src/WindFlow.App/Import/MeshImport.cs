@@ -30,10 +30,12 @@ public static class MeshImport
         // An OBJ has no node transforms, so it keeps its node tree (the group names say which meshes are windows and doors);
         // every other format is flattened as before.
         bool isObj = Path.GetExtension(path).Equals(".obj", StringComparison.OrdinalIgnoreCase);
+        // No FindDegenerates: in Assimp 6.0.2 a polygon that triangulates to nothing leaves an empty mesh, FindDegenerates gives it no
+        // primitive type, and SortByPrimitiveType then frees meshes twice (a native heap-corruption crash, no message). Zero-area
+        // triangles are dropped in the face loop below instead.
         uint flags = (uint)(PostProcessSteps.Triangulate | (isObj ? 0 : PostProcessSteps.PreTransformVertices) |
                             PostProcessSteps.JoinIdenticalVertices | PostProcessSteps.RemoveComponent |
-                            PostProcessSteps.FindDegenerates | PostProcessSteps.FindInvalidData |
-                            PostProcessSteps.SortByPrimitiveType);
+                            PostProcessSteps.FindInvalidData | PostProcessSteps.SortByPrimitiveType);
         var scene = api.ImportFile(path, flags);
         if (scene == null)
             throw new InvalidDataException($"Assimp could not read {Path.GetFileName(path)}: {api.GetErrorStringS()}");
@@ -75,6 +77,8 @@ public static class MeshImport
                 {
                     var face = mesh->MFaces[f];
                     if (face.MNumIndices != 3) continue;         // Triangulate should have handled this
+                    Vector3 a = vertices[face.MIndices[0]], b = vertices[face.MIndices[1]], c = vertices[face.MIndices[2]];
+                    if (a == b || b == c || a == c) continue;   // zero-area triangle (what FindDegenerates used to drop)
                     indices.Add((int)face.MIndices[0]);
                     indices.Add((int)face.MIndices[1]);
                     indices.Add((int)face.MIndices[2]);
@@ -320,6 +324,13 @@ public static class MeshImport
             obstacles.Add(new CoreMesh { Id = mesh.Id, Vertices = vertices, Indices = mesh.Indices });
         }
 
+        if (settings.RemoveStrays && obstacles.Count > 1 && DropStrays(obstacles, geometry, settings))
+        {
+            min = new Vector3(float.MaxValue); max = new Vector3(float.MinValue);
+            foreach (var o in obstacles)
+                foreach (var v in o.Vertices) { min = Vector3.Min(min, v); max = Vector3.Max(max, v); }
+        }
+
         // A building drawn rotated on its site loses its windows to voxel staircases: turn it so its walls follow the grid axes.
         // The model's north is turned with it, so wind directions stay true.
         if (settings.AlignToGrid && obstacles.Count > 0 && DominantWallTurn(obstacles) is double turn)
@@ -378,6 +389,60 @@ public static class MeshImport
                 Analysed = true,
             });
         return model;
+    }
+
+    /// <summary>Removes small clusters (under 3 m each way) more than 50 m from the main (most triangles) cluster, so a scale figure left at the origin does not blow up the grid.
+    /// Meshes join a cluster when their boxes, each grown 5 m, overlap. Returns true if any were removed.</summary>
+    static bool DropStrays(List<CoreMesh> obstacles, ImportedGeometry g, ImportSettings settings)
+    {
+        int n = obstacles.Count;
+        var lo = new Vector3[n]; var hi = new Vector3[n]; var tris = new int[n];
+        for (int i = 0; i < n; i++)
+        {
+            var a = new Vector3(float.MaxValue); var b = new Vector3(float.MinValue);
+            foreach (var v in obstacles[i].Vertices) { a = Vector3.Min(a, v); b = Vector3.Max(b, v); }
+            lo[i] = a; hi[i] = b; tris[i] = obstacles[i].Indices.Length / 3;
+        }
+        var parent = Enumerable.Range(0, n).ToArray();
+        int Find(int x) { while (parent[x] != x) x = parent[x] = parent[parent[x]]; return x; }
+        const float Grow = 5f;
+        for (int i = 0; i < n; i++)
+            for (int j = i + 1; j < n; j++)
+                if (lo[i].X - Grow <= hi[j].X + Grow && lo[j].X - Grow <= hi[i].X + Grow &&
+                    lo[i].Y - Grow <= hi[j].Y + Grow && lo[j].Y - Grow <= hi[i].Y + Grow &&
+                    lo[i].Z - Grow <= hi[j].Z + Grow && lo[j].Z - Grow <= hi[i].Z + Grow)
+                    parent[Find(i)] = Find(j);
+        var cl = new Dictionary<int, (Vector3 Lo, Vector3 Hi, long Tris, List<int> Members)>();
+        for (int i = 0; i < n; i++)
+        {
+            int r = Find(i);
+            cl[r] = cl.TryGetValue(r, out var c)
+                ? (Vector3.Min(c.Lo, lo[i]), Vector3.Max(c.Hi, hi[i]), c.Tris + tris[i], c.Members.Append(i).ToList())
+                : (lo[i], hi[i], tris[i], [i]);
+        }
+        if (cl.Count < 2) return false;
+        var main = cl.Values.MaxBy(c => c.Tris);
+        var drop = new HashSet<int>();
+        int clusters = 0; string? example = null; double exampleDist = 0;
+        foreach (var c in cl.Values)
+        {
+            var size = c.Hi - c.Lo;
+            if (size.X >= 3 || size.Y >= 3 || size.Z >= 3 || c.Tris >= main.Tris) continue;
+            float gx = MathF.Max(0, MathF.Max(c.Lo.X - main.Hi.X, main.Lo.X - c.Hi.X));
+            float gy = MathF.Max(0, MathF.Max(c.Lo.Y - main.Hi.Y, main.Lo.Y - c.Hi.Y));
+            float gz = MathF.Max(0, MathF.Max(c.Lo.Z - main.Hi.Z, main.Lo.Z - c.Hi.Z));
+            double dist = Math.Sqrt(gx * gx + gy * gy + gz * gz);
+            if (dist <= 50) continue;
+            clusters++;
+            string name = c.Members.Select(i => g.MeshNames.TryGetValue(obstacles[i].Id, out var nm) ? nm.Trim() : null).FirstOrDefault(s => !string.IsNullOrEmpty(s)) ?? "unnamed";
+            if (example == null || dist > exampleDist) { example = name; exampleDist = dist; }
+            settings.Log.Add($"stray removed: \"{name}\" ({size.X:0.#} x {size.Y:0.#} x {size.Z:0.#} m, {dist:0} m from the building)");
+            foreach (var i in c.Members) drop.Add(i);
+        }
+        if (drop.Count == 0) return false;
+        for (int i = n - 1; i >= 0; i--) if (drop.Contains(i)) obstacles.RemoveAt(i);
+        settings.Notes.Add($"Removed {clusters} small object{(clusters == 1 ? "" : "s")} far from the building (e.g. \"{example}\", {exampleDist:0} m away) so the grid fits the building.");
+        return true;
     }
 
     /// <summary>Build plus room/opening detection, with the shape pass: pieces that fill a hole in a wall are found without names. A piece is the meshes of one OBJ group
@@ -469,7 +534,7 @@ public static class MeshImport
             lo[i] = new Vector3(float.MaxValue); hi[i] = new Vector3(float.MinValue);
             foreach (var v in obs[i].Vertices) { lo[i] = Vector3.Min(lo[i], v); hi[i] = Vector3.Max(hi[i], v); }
             // the piece is the OBJ group: the meshes sharing one name (its chain ends in the group, one mesh per material); no name: the mesh alone
-            string key = g.MeshNames.TryGetValue(obs[i].Id, out var nm) ? nm : " " + obs[i].Id;
+            string key = g.MeshNames.TryGetValue(obs[i].Id, out var nm) ? nm : "\0" + obs[i].Id;
             if (!groups.TryGetValue(key, out var l)) groups[key] = l = [];
             l.Add(i);
         }
@@ -730,6 +795,8 @@ public sealed class ImportSettings
     public List<string> Notes = new();
     /// <summary>Turn a building drawn at an angle so its walls follow the grid axes (north is turned with it).</summary>
     public bool AlignToGrid = true;
+    /// <summary>Drop small objects (a scale figure) more than 50 m from the building so they do not stretch the grid.</summary>
+    public bool RemoveStrays = true;
     /// <summary>Why the dialog started on Z-up, "" if it did not (D5).</summary>
     public string UpAxisReason = "";
 }

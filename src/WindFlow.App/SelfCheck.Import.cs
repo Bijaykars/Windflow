@@ -112,6 +112,36 @@ public static partial class SelfCheck
                 $"meshes {off.Obstacles.Count} → {on.Obstacles.Count} · frame removed {!keptOn.Contains(IdOf("Group_17"))} · pier kept {keptOn.Contains(IdOf("Group_18"))} · table kept {keptOn.Contains(IdOf("Group_19"))} · openings with pass [{string.Join(", ", onDet?.Openings.Select(o => o.Kind + " " + o.Name) ?? [])}] without [{string.Join(", ", offDet?.Openings.Select(o => o.Kind + " " + o.Name) ?? [])}] · {string.Join(" | ", sOn.Log.Where(l => l.StartsWith("shape", StringComparison.Ordinal)))} {onErr?.Message}{offErr?.Message}"));
         }
         finally { File.Delete(stem4 + ".obj"); }
+
+        // A scale figure left far from the house is dropped with a note; the same figure close by and a building-sized block far away stay.
+        string stem5 = stem + "-stray";
+        try
+        {
+            int Count(double x, double sx, double sy, double sz, out ImportSettings st)
+            {
+                string path = WriteHouse(stem5, 0);
+                string txt = File.ReadAllText(path);
+                int v0 = txt.Split('\n').Count(l => l.StartsWith("v ", StringComparison.Ordinal));
+                var sb = new System.Text.StringBuilder(txt);
+                for (int i = 0; i < 8; i++)
+                    sb.Append(FormattableString.Invariant($"v {x + ((i & 1) == 0 ? 0 : sx)} {((i & 2) == 0 ? 0 : sy)} {((i & 4) == 0 ? 0 : sz)}\n"));
+                sb.Append("g Sumele1\n");
+                foreach (var f in new[] { new[] { 0, 2, 3, 1 }, new[] { 4, 5, 7, 6 }, new[] { 0, 1, 5, 4 }, new[] { 2, 6, 7, 3 }, new[] { 0, 4, 6, 2 }, new[] { 1, 3, 7, 5 } })
+                    sb.Append("f " + string.Join(" ", f.Select(k => v0 + k + 1)) + "\n");
+                File.WriteAllText(path, sb.ToString());
+                var sg2 = MeshImport.Load(path);
+                st = new ImportSettings { YUpToZUp = false }; st.Storeys = MeshImport.GuessStoreys(sg2.Meshes, st);
+                return MeshImport.Build(sg2, st).Obstacles.Count;
+            }
+            int baseN = Count(20, 0.5, 0.5, 1.7, out _) - 1;   // near: all kept
+            int far = Count(300, 0.5, 0.5, 1.7, out var sFar);
+            int near = Count(20, 0.5, 0.5, 1.7, out var sNear);
+            int block = Count(300, 10, 10, 6, out var sBlock);
+            feature.Add(("Import: a small object (a scale figure) 300 m from the house is removed with a note; the same object 20 m away and a building-sized block 300 m away are kept",
+                far == baseN && near == baseN + 1 && block == baseN + 1 && sFar.Notes.Any(n => n.Contains("far from the building", StringComparison.Ordinal) && n.Contains("Sumele1", StringComparison.Ordinal) && n.Contains("292 m", StringComparison.Ordinal)) && !sNear.Notes.Any(n => n.Contains("far from the building", StringComparison.Ordinal)) && !sBlock.Notes.Any(n => n.Contains("far from the building", StringComparison.Ordinal)),
+                $"meshes house {baseN} · far {far} · near {near} · block {block} · {string.Join(" | ", sFar.Notes)}"));
+        }
+        finally { File.Delete(stem5 + ".obj"); }
     }
 
     /// <summary>Writes a Z-up OBJ of a box house (floor, roof, four 0.2 m walls, a 2 x 1 m window hole in the y = 0 wall) turned <paramref name="deg"/> degrees counter-clockwise about its corner.</summary>
