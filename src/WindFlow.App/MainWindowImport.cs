@@ -115,7 +115,7 @@ public partial class MainWindow
     void ApplyImport(ImportedGeometry imported, ImportSettings settings)
     {
         var sw = Stopwatch.StartNew();
-        var built = MeshImport.Build(imported, settings);
+        var (built, detectedRooms, detectError) = MeshImport.BuildAndDetect(imported, settings, settings.DetectRooms, System.Environment.ProcessorCount - 1);
         string rooms = "no rooms", detectNotes = "";
         int openings = 0;
         if (settings.DetectRooms)
@@ -123,7 +123,8 @@ public partial class MainWindow
             try
             {
                 // A fixed cell size (IMP-B D1, was a fixed budget in S3-03): 50 mm under 400 m2 of plan, else 100 mm.
-                var detected = RoomDetect.Detect(built, System.Environment.ProcessorCount - 1);
+                if (detectError != null) throw detectError;
+                var detected = detectedRooms!;
                 detectNotes = detected.Notes.Count == 0 ? "" : " Detection notes: " + string.Join(" | ", detected.Notes) + ".";   // S3-04
                 built.Rooms.AddRange(detected.Rooms);
                 built.Openings.AddRange(detected.Openings);

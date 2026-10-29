@@ -22,7 +22,8 @@ static class ImportTest
             s.Storeys = MeshImport.GuessStoreys(g.Meshes, s);
             Line($"file        {g.FileName} · {g.Meshes.Count} meshes · {g.Triangles} triangles");
             Line($"unit        {MeshImport.Units[unit].Label} ({(declared ? "declared by the file" : g.WrittenByAutodeskAtf ? "Autodesk ATF" : "guessed from the size")}{(g.WrittenBySketchUp ? ", SketchUp" : "")}) · up axis {(s.YUpToZUp ? "Y-up" : "Z-up")}{(upWhy.Length > 0 ? " (" + upWhy + ")" : "")}");
-            var built = MeshImport.Build(g, s);
+            var (built, d0, detectError) = MeshImport.BuildAndDetect(g, s, true, System.Environment.ProcessorCount - 1);
+            if (detectError != null) throw detectError;
             Line($"meshes      {g.Meshes.Count} in, {built.Obstacles.Count} kept");
             var kept = built.Obstacles.Select(m => m.Id).ToHashSet();
             foreach (var grp in g.Meshes.Where(m => !kept.Contains(m.Id)).GroupBy(m => (g.PaneMeshIds.Contains(m.Id) && !(g.MeshNames.TryGetValue(m.Id, out var nm) && MeshImport.IsComponentName(nm)) ? "pane " : "component ") + (g.MeshNames.TryGetValue(m.Id, out var n) ? n.Trim() : "(unnamed)")))
@@ -30,7 +31,11 @@ static class ImportTest
             foreach (var l in s.Log.Where(l => l.StartsWith("component kept", StringComparison.Ordinal))) Line("  " + l);
             foreach (var n in s.Notes) Line("  note      " + n);
             Line($"storeys     {string.Join(" · ", built.Storeys.Select(st => $"{st.Name} z {st.Elevation:0.##} h {st.Height:0.##} m"))}");
-            var d = RoomDetect.Detect(built, System.Environment.ProcessorCount - 1);
+            foreach (var l in s.Log.Where(l => l.StartsWith("shape removed", StringComparison.Ordinal))) Line("  " + l);
+            var rej = s.Log.Where(l => l.StartsWith("shape rejected", StringComparison.Ordinal)).ToList();
+            if (rej.Count > 0) Line($"  shape rejected {rej.Count} piece(s), first {Math.Min(10, rej.Count)}:");
+            foreach (var l in rej.OrderBy(l => l.EndsWith("(vehicle)", StringComparison.Ordinal)).Take(10)) Line("    " + l["shape rejected: ".Length..]);
+            var d = d0!;
             Line($"rooms       {d.Rooms.Count} at {d.Dx * 1000:0} mm");
             foreach (var r in d.Rooms) Line($"  {r.Name} · {r.Level}");
             Line($"openings    {d.Openings.Count}: " + string.Join(", ", d.Openings.GroupBy(o => o.Kind).Select(k => $"{k.Count()} {k.Key}")));

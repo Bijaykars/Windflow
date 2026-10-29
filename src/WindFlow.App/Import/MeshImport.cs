@@ -289,8 +289,8 @@ public static class MeshImport
     /// <summary>Applies the dialog's choices and produces something the solver can voxelise: scaled and
     /// rotated triangles as obstacles, GroundZ at the bounding-box floor, and the storeys the user settled
     /// on. No openings and no rooms — see the class remarks.</summary>
-    public static BuildingModel Build(ImportedGeometry geometry, ImportSettings settings)
-    {
+    public static BuildingModel Build(ImportedGeometry geometry, ImportSettings settings, HashSet<string>? shapeRemoved = null)
+    {   // shapeRemoved: meshes the shape pass (BuildAndDetect) took out; they still shape the frame (turn, shift) so every pass shares one frame, but are not added to the model
         var model = new BuildingModel { Name = Path.GetFileNameWithoutExtension(geometry.FileName) };
         var obstacles = new List<CoreMesh>(geometry.Meshes.Count);
         var min = new Vector3(float.MaxValue);
@@ -364,7 +364,7 @@ public static class MeshImport
         max += shift;
         min += shift;
 
-        model.Obstacles.AddRange(obstacles);
+        model.Obstacles.AddRange(shapeRemoved is { Count: > 0 } ? obstacles.Where(o => !shapeRemoved.Contains(o.Id)) : obstacles);
         model.GroundZ = 0;
 
         var storeys = settings.Storeys.Count > 0 ? settings.Storeys : [new StoreyPlan(0, max.Z - min.Z)];
@@ -378,6 +378,118 @@ public static class MeshImport
                 Analysed = true,
             });
         return model;
+    }
+
+    /// <summary>Build plus room/opening detection, with the shape pass: pieces that fill a hole in a wall are found without names. A piece is the meshes of one OBJ group
+    /// (one mesh with no parent group is its own piece). Candidates are pieces of window/door size (union box 0.3-3 m high, larger plan side 0.3-4 m, smaller plan side up to 0.6 m)
+    /// attached to another mesh, whose names carry no vehicle word; all are removed at once and the model detected. A piece is accepted when 80 % of its vertices lie in a detected
+    /// (not "Gap n") opening box, that opening has wall above it, and the piece spans 70 % of the opening width and of its height (a filler fills its hole). A piece that sits in a
+    /// hole but is too small for it (a spandrel panel or sill box merged into the hole) stays solid and the detection is repeated without it (the lowest one per round, up to 3 rounds), so the hole shrinks to the
+    /// window itself. The final model drops only the accepted pieces. Runs only with <see cref="ImportSettings.RemoveComponents"/>; with no candidate it is just Build + Detect.
+    /// Accepted and rejected pieces go to <see cref="ImportSettings.Log"/> ("shape removed" / "shape rejected"). A detection failure in the final pass is returned in Error.</summary>
+    // ponytail: a spandrel that is part of a bigger piece (one group with the wall) is not seen; a window split over several groups is judged group by group; upgrade: merge touching candidates
+    public static (BuildingModel Built, DetectedRooms? Detected, Exception? Error) BuildAndDetect(ImportedGeometry g, ImportSettings s, bool detect, int? maxDop = null)
+    {
+        int notes0 = s.Notes.Count, log0 = s.Log.Count;
+        var built = Build(g, s);
+        if (!detect) return (built, null, null);
+        (BuildingModel, DetectedRooms?, Exception?) Final(BuildingModel m)
+        {
+            try { return (m, RoomDetect.Detect(m, maxDop), null); } catch (Exception e) { return (m, null, e); }
+        }
+        var vehicles = new List<string>();
+        var cands = s.RemoveComponents ? ShapePieces(g, built, vehicles) : [];
+        if (cands.Count == 0) { s.Log.AddRange(vehicles.Select(v => "shape rejected: " + v)); return Final(built); }
+
+        var baseNotes = s.Notes.Skip(notes0).ToList(); var baseLog = s.Log.Skip(log0).ToList();
+        var accepted = new List<ShapePiece>();
+        var lines = new List<string>();
+        var vehiclesAndRejected = vehicles;
+        for (int round = 0; round < 3 && cands.Count > 0; round++)
+        {
+            DetectedRooms? pass1 = null;
+            try { pass1 = RoomDetect.Detect(Build(g, s, cands.SelectMany(c => c.Meshes).Select(m => m.Id).ToHashSet()), maxDop); } catch (Exception) { }
+            s.Notes.RemoveRange(notes0, s.Notes.Count - notes0); s.Log.RemoveRange(log0, s.Log.Count - log0);
+            accepted.Clear(); lines.Clear();
+            var tooSmall = new List<ShapePiece>();
+            var reasons = new Dictionary<ShapePiece, string>();
+            foreach (var c in pass1?.Openings ?? [])
+            {
+                if (c.Name.StartsWith("Gap", StringComparison.Ordinal)) continue;
+                var st = built.Storeys.FirstOrDefault(x => x.Id == c.Level);
+                var n = new Vector3(c.Normal.X, c.Normal.Y, 0); n = n.LengthSquared() > 0 ? Vector3.Normalize(n) : Vector3.UnitX;
+                var w = new Vector3(-n.Y, n.X, 0);
+                float hn = c.Depth + 0.15f, hw = c.Width / 2 + 0.05f, hh = c.Height / 2 + 0.05f;
+                bool pier = st == null || c.Center.Z + c.Height / 2 > st.Elevation + st.Height - 0.1f;   // floor to ceiling: a wall pier, not a window
+                foreach (var pc in cands)
+                {
+                    if (accepted.Contains(pc)) continue;
+                    int inside = pc.Meshes.Sum(m => m.Vertices.Count(v => { var d = v - c.Center; return MathF.Abs(Vector3.Dot(d, n)) <= hn && MathF.Abs(Vector3.Dot(d, w)) <= hw && MathF.Abs(d.Z) <= hh; }));
+                    if (inside < 0.8 * pc.VertexCount) continue;
+                    if (pier) { reasons[pc] = "the hole it sits in runs floor to ceiling (a wall pier)"; continue; }
+                    var along = pc.Meshes.SelectMany(m => m.Vertices).Select(v => Vector3.Dot(v - c.Center, w)).ToList();
+                    if (along.Max() - along.Min() < 0.7f * c.Width || pc.Hi.Z - pc.Lo.Z < 0.7f * c.Height)
+                    { reasons[pc] = $"covers under 70 % of the {c.Width:0.##} x {c.Height:0.##} m opening {c.Name}"; if (!tooSmall.Contains(pc)) tooSmall.Add(pc); continue; }
+                    accepted.Add(pc); reasons.Remove(pc); tooSmall.Remove(pc);
+                    lines.Add($"shape removed: {pc.Name} fills opening {c.Name}");
+                }
+            }
+            foreach (var pc in accepted) reasons.Remove(pc);
+            vehiclesAndRejected = vehicles.Concat(cands.Where(c => !accepted.Contains(c)).Select(c => c.Name + " (" + (reasons.TryGetValue(c, out var why) ? why : "no opening holds it: under 80 % of its vertices inside one") + ")")).ToList();
+            if (tooSmall.Count == 0) break;
+            cands.Remove(tooSmall.OrderBy(c => c.Lo.Z).First());   // keep the lowest too-small one solid (the spandrel) and look again: the hole may shrink to the window
+        }
+        var rejLines = vehiclesAndRejected.Select(r => "shape rejected: " + r).ToList();
+        if (accepted.Count == 0)
+        {
+            s.Notes.AddRange(baseNotes); s.Log.AddRange(baseLog); s.Log.AddRange(rejLines);
+            return Final(built);
+        }
+        var final = Build(g, s, accepted.SelectMany(c => c.Meshes).Select(m => m.Id).ToHashSet());
+        s.Log.AddRange(lines); s.Log.AddRange(rejLines);
+        s.Notes.Add($"{accepted.Count} unnamed window/door pieces were recognised by their shape and removed so their holes read as openings (untick \"Treat window and door components as openings\" to keep them)");
+        return Final(final);
+    }
+
+    sealed class ShapePiece(string name, List<CoreMesh> meshes, Vector3 lo, Vector3 hi)
+    {
+        public string Name = name; public List<CoreMesh> Meshes = meshes; public Vector3 Lo = lo, Hi = hi;
+        public int VertexCount => Meshes.Sum(m => m.Vertices.Length);
+    }
+
+    /// <summary>Pieces (model frame, metres) that could be a window or door leaf: see <see cref="BuildAndDetect"/>. A piece with a vehicle word in a name is not one;
+    /// it goes to <paramref name="vehicles"/> (as a rejection line) once it passes the size and attachment tests.</summary>
+    static List<ShapePiece> ShapePieces(ImportedGeometry g, BuildingModel m, List<string> vehicles)
+    {
+        var obs = m.Obstacles;
+        var lo = new Vector3[obs.Count]; var hi = new Vector3[obs.Count];
+        var groups = new Dictionary<string, List<int>>();
+        for (int i = 0; i < obs.Count; i++)
+        {
+            lo[i] = new Vector3(float.MaxValue); hi[i] = new Vector3(float.MinValue);
+            foreach (var v in obs[i].Vertices) { lo[i] = Vector3.Min(lo[i], v); hi[i] = Vector3.Max(hi[i], v); }
+            // the piece is the OBJ group: the meshes sharing one name (its chain ends in the group, one mesh per material); no name: the mesh alone
+            string key = g.MeshNames.TryGetValue(obs[i].Id, out var nm) ? nm : " " + obs[i].Id;
+            if (!groups.TryGetValue(key, out var l)) groups[key] = l = [];
+            l.Add(i);
+        }
+        var list = new List<ShapePiece>();
+        foreach (var (key, idx) in groups)
+        {
+            var plo = idx.Select(i => lo[i]).Aggregate(Vector3.Min); var phi = idx.Select(i => hi[i]).Aggregate(Vector3.Max);
+            var sz = phi - plo;
+            float big = MathF.Max(sz.X, sz.Y), small = MathF.Min(sz.X, sz.Y);
+            if (sz.Z < 0.3f || sz.Z > 3f || big < 0.3f || big > 4f || small > 0.6f) continue;
+            var members = idx.ToHashSet();
+            bool attached = false;
+            for (int j = 0; j < obs.Count && !attached; j++)
+                attached = !members.Contains(j) && lo[j].X <= phi.X + 0.05f && hi[j].X >= plo.X - 0.05f && lo[j].Y <= phi.Y + 0.05f && hi[j].Y >= plo.Y - 0.05f && lo[j].Z <= phi.Z + 0.05f && hi[j].Z >= plo.Z - 0.05f;
+            if (!attached) continue;
+            string name = key[0] != '\0' ? key.Trim() : g.MeshNames.TryGetValue(key[1..], out var n1) ? n1.Trim() : "mesh " + key[1..9];
+            if (idx.Any(i => g.MeshNames.TryGetValue(obs[i].Id, out var n2) && NameWords(n2).Any(NotBuildingWords.Contains))) { vehicles.Add(name + " (vehicle)"); continue; }
+            list.Add(new ShapePiece(name, idx.Select(i => obs[i]).ToList(), plo, phi));
+        }
+        return list.Sum(p => p.Meshes.Count) >= obs.Count ? [] : list;
     }
 
     /// <summary>The smallest turn (degrees, in (-45, 45]) that would bring the dominant wall direction onto an axis, or null when it is under 1°
