@@ -37,6 +37,7 @@ static class ImportTest
             foreach (var o in d.Openings.OrderBy(o => o.Kind))
                 Line($"  {o.Kind,-7} {o.Name} · {o.Width:0.00} x {o.Height:0.00} m · centre ({o.Center.X:0.0}, {o.Center.Y:0.0}, {o.Center.Z:0.0})");
             foreach (var n in d.Notes) Line("  detect    " + n);
+            if (OpeningDetect.GapNote(d.Openings, built.Storeys) is { Length: > 0 } gapNote) Line("  note      " + gapNote);
         }
         catch (Exception e) { Line("FAILED " + e.Message); File.WriteAllText(OutFile(), sb.ToString()); return 1; }
         File.WriteAllText(OutFile(), sb.ToString());

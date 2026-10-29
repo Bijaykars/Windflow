@@ -471,11 +471,14 @@ public static class OpeningDetect
                           .ThenByDescending(f => MathF.Round(f.Centre.Y * 2))
                           .ThenBy(f => MathF.Round(f.Centre.X * 2))
                           .ThenBy(f => f.Centre.Z).ToList();
-        var counters = new Dictionary<GapClass, int>();
+        var counters = new Dictionary<string, int>();
         var openings = new List<Opening>();
         foreach (var f in sorted)
         {
-            int n = counters[f.Class] = counters.GetValueOrDefault(f.Class) + 1;
+            // A long thin hole (or one under 15 cm) is more likely a modelling gap than a window: only the name says so.
+            float longSide = MathF.Max(f.Width, f.Height), shortSide = MathF.Min(f.Width, f.Height);
+            string label = longSide > 10f * shortSide || shortSide < 0.15f ? "Gap" : f.Class.ToString();
+            int n = counters[label] = counters.GetValueOrDefault(label) + 1;
             var axis = f.Gap.NormalX ? Vector3.UnitX : Vector3.UnitY;
             string where;
             Vector3 normal;
@@ -501,7 +504,7 @@ public static class OpeningDetect
             openings.Add(new Opening
             {
                 Id = $"det-open-{storey.Id}-{openings.Count + 1}",
-                Name = $"{f.Class} {n}",
+                Name = $"{label} {n}",
                 Level = storey.Id,
                 Kind = f.Class switch { GapClass.Door => OpeningKind.Door, GapClass.Window => OpeningKind.Window, _ => OpeningKind.Opening },
                 IsOpen = true,                     // the hole is in the mesh: it starts open
@@ -570,6 +573,24 @@ public static class OpeningDetect
             }
             return Unknown;
         }
+    }
+
+    /// <summary>The import-note sentence about openings named "Gap n" (see <see cref="Resolve"/>); "" when there are none. Heights are above the opening's storey floor.</summary>
+    public static string GapNote(IReadOnlyList<Opening> openings, IReadOnlyList<Storey> storeys)
+    {
+        var gaps = openings.Where(o => o.Name.StartsWith("Gap ", StringComparison.Ordinal)).ToList();
+        if (gaps.Count == 0) return "";
+        var ci = System.Globalization.CultureInfo.InvariantCulture;
+        string One(Opening o)
+        {
+            float floor = storeys.FirstOrDefault(s => s.Id == o.Level)?.Elevation ?? 0f;
+            float lo = MathF.Max(0f, o.Center.Z - o.Height / 2 - floor);
+            return string.Create(ci, $"{o.Name}: {MathF.Max(o.Width, o.Height):0.#} × {MathF.Min(o.Width, o.Height):0.#} m, {lo:0.#}–{lo + o.Height:0.#} m up");
+        }
+        string list = string.Join("; ", gaps.Take(3).Select(One)) + (gaps.Count > 3 ? $"; and {gaps.Count - 3} more" : "");
+        return gaps.Count == 1
+            ? $"1 gap looks like a hole in the model rather than a window ({list}). Close it in your modelling program, or switch it off in the Openings list."
+            : $"{gaps.Count} gaps look like holes in the model rather than windows ({list}). Close them in your modelling program, or switch them off in the Openings list.";
     }
 
     /// <summary>D8a: a gap with a sill under <see cref="DoorMaxSill"/> that is a stack of two or more pieces, each run of pieces shorter than

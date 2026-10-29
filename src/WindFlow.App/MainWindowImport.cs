@@ -128,6 +128,7 @@ public partial class MainWindow
                 built.Rooms.AddRange(detected.Rooms);
                 built.Openings.AddRange(detected.Openings);
                 openings = detected.Openings.Count;
+                if (OpeningDetect.GapNote(detected.Openings, built.Storeys) is { Length: > 0 } gapNote) detectNotes += " " + gapNote;
                 rooms = detected.Rooms.Count == 0
                     ? "no enclosed regions found"
                     : $"{detected.Rooms.Count} room{(detected.Rooms.Count == 1 ? "" : "s")} detected at {detected.Dx * 1000:0} mm";

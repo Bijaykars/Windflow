@@ -128,7 +128,9 @@ public static class MeshImport
 
     // ---------------------------------------------------------------- window and door components
 
-    static readonly HashSet<string> ComponentWords = new(["window", "windows", "door", "doors", "sash", "lite", "lites", "glazing", "casement", "mullion", "frame", "frames", "shutter"], StringComparer.Ordinal);
+    static readonly HashSet<string> ComponentWords = new(["window", "windows", "door", "doors", "sash", "lite", "lites", "glazing", "casement", "mullion", "frame", "frames", "shutter",
+        // the same words in the languages SketchUp/3D Warehouse components most often carry (whole words only; compounds such as "Haustür" do not match)
+        "fenster", "tür", "tuer", "fenêtre", "fenetre", "porte", "ventana", "puerta", "finestra", "porta", "janela", "raam", "deur", "fönster", "dörr", "okno", "drzwi"], StringComparer.Ordinal);
     static readonly HashSet<string> NotBuildingWords = new(["vehicle", "vehicles", "car", "cars", "chassis"], StringComparer.Ordinal);
     static readonly System.Text.RegularExpressions.Regex CamelBreak = new(@"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
 
@@ -318,6 +320,28 @@ public static class MeshImport
             obstacles.Add(new CoreMesh { Id = mesh.Id, Vertices = vertices, Indices = mesh.Indices });
         }
 
+        // A building drawn rotated on its site loses its windows to voxel staircases: turn it so its walls follow the grid axes.
+        // The model's north is turned with it, so wind directions stay true.
+        if (settings.AlignToGrid && obstacles.Count > 0 && DominantWallTurn(obstacles) is double turn)
+        {
+            var c = (min + max) * 0.5f;
+            double phi = -turn * Math.PI / 180, cs = Math.Cos(phi), sn = Math.Sin(phi);
+            min = new Vector3(float.MaxValue); max = new Vector3(float.MinValue);
+            foreach (var mesh in obstacles)
+                for (int i = 0; i < mesh.Vertices.Length; i++)
+                {
+                    var v = mesh.Vertices[i];
+                    double dx = v.X - c.X, dy = v.Y - c.Y;
+                    v = new Vector3(c.X + (float)(cs * dx - sn * dy), c.Y + (float)(sn * dx + cs * dy), v.Z);
+                    mesh.Vertices[i] = v;
+                    min = Vector3.Min(min, v);
+                    max = Vector3.Max(max, v);
+                }
+            // Rotating the model by -turn (counter-clockwise) lowers every clockwise-from-+Y bearing by -turn, so north moves by +turn.
+            model.NorthDeg = (float)(((model.NorthDeg + turn) % 360 + 360) % 360);
+            settings.Notes.Add($"Turned the model {Math.Abs(turn):0.#}° so its walls line up with the simulation grid (north and wind directions are unchanged)");
+        }
+
         if (dropPanes)
             settings.Notes.Add($"removed {paneArea:0.#} m² of glass ({geometry.PaneMaterials} transparent material{(geometry.PaneMaterials == 1 ? "" : "s")}) so windows stay open (untick \"Remove glass panes\" to keep them)");
 
@@ -354,6 +378,51 @@ public static class MeshImport
                 Analysed = true,
             });
         return model;
+    }
+
+    /// <summary>The smallest turn (degrees, in (-45, 45]) that would bring the dominant wall direction onto an axis, or null when it is under 1°
+    /// or no direction dominates (the peak holds under 30 % of the near-vertical triangle area). Area-weighted 1° histogram of the folded wall-normal angle.</summary>
+    internal static double? DominantWallTurn(List<CoreMesh> meshes)
+    {
+        var area = new double[90];
+        var sum = new double[90];     // area-weighted angle, to refine the peak
+        double total = 0;
+        foreach (var mesh in meshes)
+            for (int t = 0; t + 2 < mesh.Indices.Length; t += 3)
+            {
+                var a = mesh.Vertices[mesh.Indices[t]];
+                var cross = Vector3.Cross(mesh.Vertices[mesh.Indices[t + 1]] - a, mesh.Vertices[mesh.Indices[t + 2]] - a);
+                float twice = cross.Length();
+                if (twice < 1e-9f || MathF.Abs(cross.Z / twice) >= 0.17f) continue;
+                double ang = Math.Atan2(cross.Y, cross.X) * 180 / Math.PI;
+                ang = (ang % 90 + 90) % 90;
+                int bin = Math.Min(89, (int)ang);
+                area[bin] += twice; sum[bin] += twice * ang; total += twice;
+            }
+        if (total <= 0) return null;
+        int best = 0; double bestArea = -1;
+        for (int b = 0; b < 90; b++)
+        {
+            double w = 0;
+            for (int k = -2; k <= 2; k++) w += area[(b + k + 90) % 90];
+            if (w > bestArea) { bestArea = w; best = b; }
+        }
+        if (bestArea < 0.3 * total) return null;
+        // refine: mean of the angles in the window, measured relative to the peak bin so the wrap at 90° does not matter
+        double num = 0, den = 0;
+        for (int k = -2; k <= 2; k++)
+        {
+            int b = (best + k + 90) % 90;
+            if (area[b] <= 0) continue;
+            double mean = sum[b] / area[b];
+            double rel = mean - (best + 0.5);
+            rel -= 90 * Math.Round(rel / 90);
+            num += area[b] * rel; den += area[b];
+        }
+        double theta = best + 0.5 + num / den;
+        theta = (theta % 90 + 90) % 90;
+        if (theta > 45) theta -= 90;
+        return Math.Abs(theta) < 1 ? null : theta;
     }
 
     /// <summary>Ids of the meshes named as window/door components (see <see cref="IsComponentName"/>), except any larger than 4 m in two dimensions.
@@ -547,6 +616,8 @@ public sealed class ImportSettings
     public List<StoreyPlan> Storeys = new();
     /// <summary>What the last <see cref="MeshImport.GuessStoreys"/> left out (D12), for the import note.</summary>
     public List<string> Notes = new();
+    /// <summary>Turn a building drawn at an angle so its walls follow the grid axes (north is turned with it).</summary>
+    public bool AlignToGrid = true;
     /// <summary>Why the dialog started on Z-up, "" if it did not (D5).</summary>
     public string UpAxisReason = "";
 }
