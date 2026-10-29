@@ -113,12 +113,25 @@ public static class OpeningDetect
     public static List<Gap> Find(VoxelGrid grid, int storey, string storeyName, int kPlane, bool[] covered, List<string> notes, int kLowest = 0, int kHighest = int.MaxValue)
     {
         int nx = grid.Nx, ny = grid.Ny;
+        // The footprint the clear band is measured on is the storey's floor area: a column with no air in it from the storey's floor to its own top or the
+        // storey's top (a wall, a pier, a solid block) holds no room and no hole, so it does not vote. Without this a modelled-solid mass beside the house (a
+        // closed block the voxeliser fills) outvotes the rooms: 70 % of the "footprint" was solid at every height and no storey had a band at all.
+        var mass = new bool[covered.Length];
+        for (int f = 0; f < covered.Length; f++)
+        {
+            if (!covered[f]) continue;
+            int top = grid.Nz - 1;
+            while (top >= 0 && grid.Cell[grid.Index(f % nx, f / nx, top)] != VoxelGrid.Solid) top--;
+            int k = Math.Max(0, kLowest);
+            while (k <= Math.Min(kHighest, top) && grid.Cell[grid.Index(f % nx, f / nx, k)] == VoxelGrid.Solid) k++;
+            mass[f] = k > Math.Min(kHighest, top);
+        }
         float Frac(int k)
         {
             int n = 0, s = 0;
             for (int f = 0; f < covered.Length; f++)
             {
-                if (!covered[f]) continue;
+                if (!covered[f] || mass[f]) continue;
                 n++;
                 if (grid.Cell[grid.Index(f % nx, f / nx, k)] == VoxelGrid.Solid) s++;
             }
