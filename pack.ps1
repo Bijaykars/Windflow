@@ -25,7 +25,7 @@ New-Item -ItemType Directory -Force -Path $releases | Out-Null
 # ponytail: no update feed yet. When there is one, add  --channel win  and publish the generated
 # RELEASES file to it, and give VelopackApp an UpdateManager pointed at the same URL (see Program.cs).
 vpk pack --packId WindFlow --packVersion $version --packDir $publish --mainExe WindFlow.App.exe `
-    --packTitle "WindFlow" --packAuthors "WindFlow" --icon (Join-Path $root "src/WindFlow.App/Assets/windflow.ico") --outputDir $releases
+    --packTitle "WindFlow" --packAuthors "Bijay Karki" --icon (Join-Path $root "src/WindFlow.App/Assets/windflow.ico") --outputDir $releases
 if ($LASTEXITCODE -ne 0) { throw "vpk pack failed" }
 
 Get-ChildItem $releases | Select-Object Name, Length | Format-Table

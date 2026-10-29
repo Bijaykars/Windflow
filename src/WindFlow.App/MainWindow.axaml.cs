@@ -1798,6 +1798,14 @@ public partial class MainWindow : Window
     void OnOpenMethod(object? sender, RoutedEventArgs e) => OpenShipped("how-windflow-works.pdf", "How WindFlow works PDF");
     void OnOpenTechRef(object? sender, RoutedEventArgs e) => OpenShipped("WindFlow-Technical-Reference.pdf", "Technical Reference PDF");
 
+    const string IssuesUrl = "https://github.com/Bijaykars/Windflow/issues";
+
+    void OnContact(object? sender, RoutedEventArgs e)
+    {
+        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(IssuesUrl) { UseShellExecute = true }); }
+        catch (Exception ex) { Log.Error("could not open the contact page", ex); StatusText.Text = $"contact: {IssuesUrl}"; }
+    }
+
     void OpenShipped(string file, string what)
     {
         string notices = Path.Combine(AppContext.BaseDirectory, file);

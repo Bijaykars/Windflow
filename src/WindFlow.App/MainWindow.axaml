@@ -82,6 +82,7 @@
                 <MenuItem x:Name="HelpMethodItem" Header="How WindFlow works (2-page PDF)" Click="OnOpenMethod" />
                 <MenuItem x:Name="HelpTechRefItem" Header="Technical Reference (PDF)" Click="OnOpenTechRef" />
                 <MenuItem x:Name="HelpTourItem" Header="Take the tour" Click="OnTakeTour" />
+                <MenuItem x:Name="HelpContactItem" Header="Contact / report a problem" Click="OnContact" />
               </MenuFlyout>
             </Button.Flyout>
           </Button>
@@ -1036,7 +1037,10 @@
           <TextBlock x:Name="AboutVersionText" Classes="rowName" FontSize="11.5" Text="WindFlow" />
           <TextBlock x:Name="AboutDisclaimerText" Classes="rowSub" TextWrapping="Wrap" Text="" />
           <TextBlock x:Name="AboutLicenceText" Classes="rowSub" TextWrapping="Wrap"
-                     Text="WindFlow is free and open source under the MIT License (see LICENSE.txt). Source code: github.com/Bijaykars/Windflow" />
+                     Text="Made by Bijay Karki. Free and open source under the MIT License (see LICENSE.txt). Source code: github.com/Bijaykars/Windflow" />
+          <Button x:Name="ContactButton" Classes="link" Content="Contact the creator / report a problem" Click="OnContact"
+                  HorizontalAlignment="Left" Margin="0,2,0,0"
+                  ToolTip.Tip="Opens the WindFlow page on GitHub where you can ask a question or report a problem (Issues)." />
           <Button x:Name="MethodButton" Classes="link" Content="How WindFlow works (PDF)" Click="OnOpenMethod"
                   HorizontalAlignment="Left" Margin="0,2,0,0"
                   ToolTip.Tip="Opens how-windflow-works.pdf, the 2-page explainer of the method and its limits." />

@@ -71,7 +71,7 @@ public static class UiTable
     public static readonly string[] BasicControls =
     [
         "OpenModelButton", "SaveModelButton", "SampleButton", "WindDirBox", "WindSpeedBox", "RunButton", "LockToggle",
-        "SpeedModeToggle", "StillModeToggle", "ReportButton", "BasicToggle", "ExpertToggle", "HelpButton", "GearButton",
+        "SpeedModeToggle", "StillModeToggle", "ReportButton", "BasicToggle", "ExpertToggle", "HelpButton", "HelpMethodItem", "HelpTechRefItem", "HelpTourItem", "HelpContactItem", "GearButton",
         // panel
         "StillSlider", "StillParticlesToggle", "AchIntentToggle", "ThermalToggle", "IndoorBox", "OutdoorBox", "HoldIndoorToggle",
         "NotesToggle", "SectionPicker", "IsolateChip", "SliceHToggle", "SliceVToggle", "SliceZSlider", "SliceOtherSlider",
@@ -79,7 +79,7 @@ public static class UiTable
         // inspector (the selected room or opening)
         "InspIsolateButton", "InspFrameButton", "InspOpeningFrameButton", "InspDeleteButton", "InspWidth", "InspHeight", "InspSill", "InspType", "RoomInspDeleteButton", "MergeButton",
         // settings popover
-        "GpuSlider", "ParticleBox", "ParticleAutoButton", "ReopenLastToggle", "LiveLinkToggle", "LogFolderButton", "MethodButton", "TechRefButton", "TourButton", "LicenceButton", "LicencesButton",
+        "GpuSlider", "ParticleBox", "ParticleAutoButton", "ReopenLastToggle", "LiveLinkToggle", "LogFolderButton", "MethodButton", "TechRefButton", "TourButton", "ContactButton", "LicenceButton", "LicencesButton",
         // empty state (no model yet)
         "EmptySampleButton", "Open model…", "EmptyTourButton",
     ];
@@ -108,7 +108,7 @@ public static class UiTable
     public static readonly string[] ViewControls =
     [
         "LockToggle", "SpeedModeToggle", "StillModeToggle", "ReportButton", "ClipToggle", "SliceHToggle",
-        "SliceVToggle", "ProbeToggle", "GhostToggle", "ParticleToggle", "StillSlider", "AchIntentToggle", "HelpButton", "GearButton",
+        "SliceVToggle", "ProbeToggle", "GhostToggle", "ParticleToggle", "StillSlider", "AchIntentToggle", "HelpButton", "HelpMethodItem", "HelpTechRefItem", "HelpTourItem", "HelpContactItem", "GearButton",
         "BasicToggle", "ExpertToggle", "NotesToggle", "RoomList", "OpeningListView", "InspIsolateButton", "InspFrameButton", "InspOpeningFrameButton",
     ];
 

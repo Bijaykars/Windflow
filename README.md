@@ -108,6 +108,10 @@ Third-party licences: [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
 
 The list of bundled packages is in [docs/LICENSES.md](docs/LICENSES.md).
 
+## Contact
+
+WindFlow is made by Bijay Karki. Questions, bug reports and ideas: [open an issue](https://github.com/Bijaykars/Windflow/issues). In the app: **?** → **Contact / report a problem**.
+
 ## Contributing
 
 Bug reports, ideas and pull requests are welcome. Contributions are accepted under the same MIT License.
