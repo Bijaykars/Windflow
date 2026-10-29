@@ -193,6 +193,7 @@
                     <Button x:Name="HelpTechRefItem" Classes="menu" Content="Technical Reference (PDF)" HorizontalContentAlignment="Left" Click="OnOpenTechRef" />
                     <Button x:Name="HelpTourItem" Classes="menu" Content="Take the tour" HorizontalContentAlignment="Left" Click="OnTakeTour" />
                     <Border Classes="menuSep" />
+                    <Button x:Name="HelpUpdateItem" Classes="menu" Content="Check for updates" HorizontalContentAlignment="Left" Click="OnHelpUpdate" />
                     <Button x:Name="HelpContactItem" Classes="menu" Content="Contact / report a problem" HorizontalContentAlignment="Left" Click="OnContact" />
                   </StackPanel>
                 </Border>
@@ -1226,6 +1227,8 @@
             <CheckBox x:Name="DomainModeToggle" Click="OnDomainMode" Content="Full wind domain (COST 732)"
                       ToolTip.Tip="Off (default): the compact wind domain, margins tied to the plan size; the building then blocks about 10 % of the wind section, above the 3 % guideline. On: margins of 5 building heights upwind, sideways and above and 10 downwind, enlarged until the blockage is at most 3 %, at the same cell size, so many more cells. Cut back, then Compact again, when graphics memory is short (a note says so). Sized for the wind direction: changing the direction rebuilds the grid. Opening sweeps and annual studies use it too. Restarts the solve." />
           </StackPanel>
+          <CheckBox x:Name="UpdatesToggle" Click="OnUpdatesToggle" Content="Check for updates automatically"
+                    ToolTip.Tip="Asks GitHub for a newer release when WindFlow opens. Nothing about you or your models is sent." />
           <Button x:Name="LogFolderButton" Classes="link" Content="Open log folder" Click="OnOpenLogFolder"
                   HorizontalAlignment="Left" Margin="0,2,0,0" />
 
@@ -1268,6 +1271,11 @@
           <TextBlock Classes="label" Text="MODEL" FontSize="10" />
           <TextBlock x:Name="ModelText" Text="-" Classes="status" Foreground="{DynamicResource Text}" />
           <TextBlock x:Name="LiveLinkText" Text="" Classes="status" IsVisible="False" />
+          <StackPanel x:Name="UpdateBar" Orientation="Horizontal" Spacing="6" IsVisible="False" VerticalAlignment="Center">
+            <TextBlock x:Name="UpdateText" Classes="status" Foreground="{DynamicResource Text}" />
+            <Button x:Name="UpdateButton" Classes="link" Content="Update and restart" Click="OnUpdateClick" Padding="2,0" />
+            <Button x:Name="UpdateDismiss" Classes="link" Content="&#215;" Click="OnUpdateDismiss" Padding="2,0" ToolTip.Tip="Hide this until the next start." />
+          </StackPanel>
         </StackPanel>
         <ProgressBar x:Name="SolveProgress" Grid.Column="1" Width="120" Height="3" Margin="16,0,0,0"
                      IsVisible="False" Minimum="0" Maximum="100" VerticalAlignment="Center" />

@@ -24,6 +24,8 @@ public static class Notes
             m => $"{m.Groups[1].Value} is open to a larger space, so its air changes count only air through openings."),
         (R(@"^(.+?): \d+ % of its air exchange passes through gaps that are not recognised as openings"),
             m => $"{m.Groups[1].Value} has holes in its walls that the model does not list as openings; air also moves through them, but the air-change figure leaves it out."),
+        (R(@"^(Most of .+ air leaks through gaps that are not openings.*)$"),
+            m => m.Groups[1].Value),
         (R(@"^Room (.+?): no air cells"),
             m => $"{m.Groups[1].Value} has no air in the model; check its walls and floor."),
         (R(@"^(?:Source|Device) (.+?): its patch is smaller than one cell"),

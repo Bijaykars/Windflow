@@ -21,6 +21,7 @@ public partial class MainWindow
     int panelTab;
     bool notesOpen;
     List<string> technicalNotes = [];
+    string shownLeakNotice = "";
     readonly HashSet<string> seenNotes = new(StringComparer.Ordinal);
     readonly Dictionary<Control, object?> lockTips = new();
     DateTime settingsClosedAt = DateTime.MinValue;
@@ -174,6 +175,17 @@ public partial class MainWindow
         // Calibrated is the default and the reason window and door flows are trustworthy on a coarse grid: say so once.
         if (openingModelSetting == OpeningModel.Calibrated && stats.Openings.Any(o => o.Opening.IsOpen && OpeningCd.Editable(o.Opening)))
             extra.Add(Notes.CalibratedTechnical);
+        // Loud, not just a note: a room whose air mostly leaks through unlisted gaps has no trustworthy result (also in the report Notes, and under the picker).
+        var leaky = stats.Rooms.Where(LeaksThroughGaps).Select(r => DisplayName(r.Room.Id, r.Room.Name)).ToList();
+        string leakNotice = leaky.Count == 0 ? "" :
+            $"Most of {string.Join(", ", leaky)}'s air leaks through gaps that are not openings — results unreliable. Remove window/door components or add openings, then run again.";
+        if (leakNotice.Length > 0) extra.Add(leakNotice);
+        if (importedGeometry && leakNotice != shownLeakNotice)
+        {
+            shownLeakNotice = leakNotice;
+            if (leakNotice.Length > 0) ShowImportNote(leakNotice, importNote);
+            else ShowImportNote(shortImportNote, importNote);
+        }
         var notes = Notes.Gather(extra, stats);
         // The full technical text reaches the log once per model and subject: the numbers inside a note move on
         // every pass, so the key is its plain sentence (one per opening, room or device).

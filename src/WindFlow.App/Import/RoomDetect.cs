@@ -91,7 +91,7 @@ public static class RoomDetect
             int kp = (int)MathF.Floor((storeys[s].Elevation + PlaneHeight - grid.Origin.Z) / grid.Dx);
             if (kp < 0 || kp >= grid.Nz) continue;
             coveredBy[s] = CoveredAbove(grid, kp, kTop);
-            gaps.AddRange(OpeningDetect.Find(grid, s, storeys[s].Name, kp, coveredBy[s], notes, Math.Max(0, (int)MathF.Floor((storeys[s].Elevation - grid.Origin.Z) / grid.Dx))));
+            gaps.AddRange(OpeningDetect.Find(grid, s, storeys[s].Name, kp, coveredBy[s], notes, Math.Max(0, (int)MathF.Floor((storeys[s].Elevation - grid.Origin.Z) / grid.Dx)), (int)MathF.Ceiling((storeys[s].Elevation + storeys[s].Height - grid.Origin.Z) / grid.Dx) - 1));
         }
         var original = grid.Cell;
         grid.Cell = (byte[])original.Clone();

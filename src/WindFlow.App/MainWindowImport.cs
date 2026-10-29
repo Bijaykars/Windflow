@@ -17,6 +17,7 @@ public partial class MainWindow
     /// bench both have to stop promising them.</summary>
     bool importedGeometry;
     string importNote = "";
+    string shortImportNote = "";
 
     async Task ImportGeometry(string path)
     {
@@ -143,7 +144,8 @@ public partial class MainWindow
         importNote = ImportNote(built.Obstacles.Count, built.Storeys.Count, rooms, openings, detectNotes);
         ShowModel(built);
         Log.Info("import note: " + importNote);
-        ShowImportNote(ShortImportNote(rooms, built.Openings), importNote);
+        shownLeakNotice = "";
+        ShowImportNote(shortImportNote = ShortImportNote(rooms, built.Openings), importNote);
         StatusText.Text = $"imported {imported.FileName} · {built.Obstacles.Count} meshes · {rooms} · {openings} openings · " +
                           $"{sw.ElapsedMilliseconds} ms — press Run to solve";
     }

@@ -41,6 +41,9 @@
     <CheckBox x:Name="PaneBox" Content="Remove glass panes (transparent materials)" IsChecked="True"
               ToolTip.Tip="Drops transparent and window/glass-named materials so a window is a real hole. Opaque doors stay as modelled; open or add them in the Openings panel. Meshes are merged per material on import, so a glass material shared by a curtain wall and windows is removed as a whole." />
 
+    <CheckBox x:Name="ComponentBox" Content="Treat window and door components as openings (remove them, keep the hole)" IsChecked="True"
+              ToolTip.Tip="Removes meshes whose group or component name is a window or door (window, door, sash, lite, casement, mullion, frame, shutter ...) so the hole in the wall behind them is found as an opening. Vehicles and anything larger than 4 m in two dimensions are kept. Doors start open; close them in the Openings panel." />
+
     <Border Classes="row" Background="{DynamicResource WarmBg}">
       <TextBlock Classes="rowSub" TextWrapping="Wrap" Foreground="{DynamicResource Warning}"
                  Text="A mesh file carries triangles and nothing else. Openings are found as holes in the walls and classified as door, window or vent by size and sill height; glass panes are removed by their transparent material (see the box below), but a closed opaque door or a pane with an opaque material is not a hole and is not found. Storeys are guessed from flat slab-like surfaces; rooms, if detected, are named Room 1, Room 2, … Detected rooms can read total air exchange about 40 % higher than the same building drawn by hand; compare imported models with each other, not with drawn ones." />

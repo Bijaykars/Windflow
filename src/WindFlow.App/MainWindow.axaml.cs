@@ -154,6 +154,7 @@ public partial class MainWindow : Window
         // First launch: the tour, once the first layout has placed its targets. Never in a headless run.
         if (!settings.TourSeen && !Automated) Dispatcher.UIThread.Post(() => StartTour(), DispatcherPriority.Background);
 
+        InitUpdates();
         statusTimer.Start();
         Viewport3D.GroundZ = model.GroundZ;
         if (Options.BenchSeconds > 0 || !string.IsNullOrEmpty(Options.Shot) || Options.TurntablePath != null ||
@@ -952,7 +953,7 @@ public partial class MainWindow : Window
                 if (drifting && !float.IsFinite(halfWidth)) rowTip += "\n" + ResultStatus.DriftTipNoRange;   // RA-03: Standard has no ±, the drift warning still shows
                 if (conv != null && !ResultStatus.FreshHasRange(convergence, r.Room.Id) && float.IsFinite(conv.RelSd) && !tooShort && !float.IsFinite(halfWidth)) detail += $" · varies ±{conv.RelSd * 100:0} % batch-to-batch";   // AGE-FIX: the total exchange's spread stays
                 // The inspector's verdict line: the chip's tooltip written out, or why there is none yet.
-                string verdict = flag.Length > 0 ? $"{flag} · {flagTip}" : exchange ? Standards.ExchangeTip : pending ? "no verdict until the air age lands" : "";
+                string verdict = LeaksThroughGaps(r) ? LeakVerdict : flag.Length > 0 ? $"{flag} · {flagTip}" : exchange ? Standards.ExchangeTip : pending ? "no verdict until the air age lands" : "";
                 rows.Add(new RoomRow(
                     roomIndex,
                     DisplayName(r.Room.Id, r.Room.Name),

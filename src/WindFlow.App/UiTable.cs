@@ -73,7 +73,7 @@ public static class UiTable
         "ProjectMenuButton", "OpenModelButton", "SaveModelButton", "SampleButton", "Export PDF report",
         "WfModel", "WfWind", "WfSimulate", "WfResults", "WfReport",
         "WindPill", "WindDirBox", "WindSpeedBox", "WindSpeedSlider", "RunButton", "LockToggle", "Frame", "CaptionMinimize", "CaptionMaximize", "CaptionClose",
-        "SpeedModeToggle", "StillModeToggle", "ReportButton", "BasicToggle", "ExpertToggle", "HelpButton", "HelpMethodItem", "HelpTechRefItem", "HelpTourItem", "HelpContactItem", "GearButton",
+        "SpeedModeToggle", "StillModeToggle", "ReportButton", "BasicToggle", "ExpertToggle", "HelpButton", "HelpMethodItem", "HelpTechRefItem", "HelpTourItem", "HelpUpdateItem", "HelpContactItem", "GearButton", "UpdatesToggle", "UpdateButton", "UpdateDismiss",
         // panel
         "StillSlider", "StillParticlesToggle", "AchIntentToggle", "ThermalToggle", "IndoorBox", "OutdoorBox", "HoldIndoorToggle",
         "NotesToggle", "SectionRoomsTab", "SectionOpeningsTab", "SectionViewTab", "IsolateChip", "SliceHToggle", "SliceVToggle", "SliceZSlider", "SliceOtherSlider",
@@ -111,7 +111,7 @@ public static class UiTable
     public static readonly string[] ViewControls =
     [
         "LockToggle", "SpeedModeToggle", "StillModeToggle", "ReportButton", "ClipToggle", "SliceHToggle",
-        "SliceVToggle", "ProbeToggle", "GhostToggle", "ParticleToggle", "StillSlider", "AchIntentToggle", "HelpButton", "HelpMethodItem", "HelpTechRefItem", "HelpTourItem", "HelpContactItem", "GearButton",
+        "SliceVToggle", "ProbeToggle", "GhostToggle", "ParticleToggle", "StillSlider", "AchIntentToggle", "HelpButton", "HelpMethodItem", "HelpTechRefItem", "HelpTourItem", "HelpUpdateItem", "HelpContactItem", "GearButton",
         "BasicToggle", "ExpertToggle", "NotesToggle", "RoomList", "OpeningListView", "InspIsolateButton", "InspFrameButton", "InspOpeningFrameButton",
     ];
 

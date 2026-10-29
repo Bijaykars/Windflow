@@ -16,8 +16,7 @@ public static class Program
     public static int Main(string[] args)
     {
         // Velopack hooks the install/update/uninstall entry points before any UI exists.
-        // ponytail: no update source yet. When there is one, pass it here
-        // (VelopackApp.Build().WithFirstRun(...).Run()) and add UpdateManager with the feed URL.
+        // The update feed (GitHub Releases) is used by UpdateCheck.cs.
         VelopackApp.Build().Run();
         Thread.CurrentThread.Name ??= "UI";
         Log.Init();
@@ -30,6 +29,7 @@ public static class Program
         };
         Options.Parse(args);
         if (args.Contains("--selfcheck")) return SelfCheck.Run();
+        if (Options.ImportTest != null) return ImportTest.Run(Options.ImportTest);
         if (Options.Solve) return HeadlessSolve.Run();
         if (Options.CompareRequested) return HeadlessCompare.Run();
         if (Options.MethodPdf != null)
@@ -88,6 +88,8 @@ public static class Options
     public static string EditAssign = "";
     public static bool SwapImport;           // --swap-import: import the test OBJ mid live bench
     public static double DeviceStress;       // --device-stress <seconds>: a device edit every 200 ms mid-bench
+    public static string? ImportTest;        // --import-test <file>: run the import pipeline with the dialog defaults and print a summary
+    public static bool UpdateNow;            // --update-now: installed copy only; check, download and apply an update once, no prompt (test)
     public static bool LiveLink;             // --livelink: listen for Revit on the pipe for this run (not persisted)
     public static string? ExportSample;      // --export-sample <path>: write the sample house JSON and exit
     public static int GpuUse;                // --gpu <percent>: GPU budget for this run (not persisted), 0 = setting
@@ -141,6 +143,8 @@ public static class Options
             else if (a is "--devices-demo") DevicesDemo = true;
             else if (a is "--swap-import") SwapImport = true;
             else if (a is "--livelink") LiveLink = true;
+            else if (a is "--update-now") UpdateNow = true;
+            else if (a is "--import-test" && i + 1 < args.Length) ImportTest = args[++i];
             else if (a is "--export-sample" && i + 1 < args.Length) ExportSample = args[++i];
             else if (a is "--gpu" && i + 1 < args.Length && int.TryParse(args[++i], out int g)) GpuUse = Math.Clamp(g, 5, 100);
             else if (a is "--tier-probe" && i + 1 < args.Length && double.TryParse(args[++i], System.Globalization.CultureInfo.InvariantCulture, out double tp)) TierProbe = tp;

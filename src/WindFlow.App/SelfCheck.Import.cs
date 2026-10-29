@@ -40,6 +40,19 @@ public static partial class SelfCheck
         }
         finally { foreach (var ext in new[] { ".obj", ".mtl" }) File.Delete(stem + ext); }
 
+        // SketchUp: "# File units = inches" is a declared unit; a window/door group is removed, a car door and a big "frame" wall are not.
+        try
+        {
+            File.WriteAllText(stem + ".obj", string.Join("\n", new[] { "# Exported from SketchUp", "# File units = inches", "g Wall House1", "v 0 0 0", "v 300 0 0", "v 300 0 200", "v 0 0 200", "f 1 2 3 4", "g Window_3lite House1", "v 10 0 10", "v 40 0 10", "v 40 0 40", "f 5 6 7", "g Door_RF Vehicles_VW", "v 10 5 10", "v 40 5 10", "v 40 5 40", "f 8 9 10", "g frame wall", "v 0 9 0", "v 300 9 0", "v 300 9 200", "f 11 12 13" }) + "\n");
+            var sk = MeshImport.Load(stem + ".obj");
+            var ss = new ImportSettings { YUpToZUp = false, DetectRooms = false, MetresPerUnit = MeshImport.Units[MeshImport.GuessUnit(sk)].Metres };
+            var skb = MeshImport.Build(sk, ss);
+            feature.Add(("Import: an OBJ with \"# File units = inches\" (SketchUp) starts on inches, and only the window group is removed",
+                MeshImport.GuessUnit(sk) == 4 && sk.WrittenBySketchUp && sk.Meshes.Count == 4 && skb.Obstacles.Count == 3 && ss.Notes.Any(n => n.StartsWith("1 window/door component removed", StringComparison.Ordinal)),
+                $"unit {MeshImport.Units[MeshImport.GuessUnit(sk)].Label} · meshes {sk.Meshes.Count} → {skb.Obstacles.Count} · {string.Join(" | ", ss.Log)}"));
+        }
+        finally { foreach (var ext in new[] { ".obj", ".mtl" }) File.Delete(stem + ext); }
+
         // Kept, not removed: a see-through curtain-wall material (opacity 0.3), glass wool (opaque) and an IfcDoor; only the window glass goes.
         string stem2 = stem + "-kept";
         try

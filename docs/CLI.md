@@ -28,7 +28,9 @@ WindFlow.App.exe [model.json]
   --empty                          start with no model loaded
   --edit-device "<name>" field=value   headlessly edit a device property and exit
   --gpu <percent>                  GPU budget for this run (not saved); in --bench it also turns the frame cap on
+  --update-now                     (installed copy, testing) check, download and apply an update once without asking; WINDFLOW_UPDATE_SOURCE=<folder> swaps GitHub for a local feed
   --livelink                       listen for the Revit add-in on \\.\pipe\WindFlow.LiveLink for this run
+  --import-test <file>             import a mesh file with the dialog defaults, detect rooms and openings, print a summary (also out\import-test.txt) and exit; no window, no solve
   --export-sample <path>           write the sample house as a .windflow.json and exit
   --accurate-start cold|warm       force the Accurate pass's seed (measurement only)
   --accurate-settle <x>            Accurate settle = x times Core's planned warm-up (measurement only)

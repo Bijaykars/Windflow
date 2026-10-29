@@ -22,6 +22,7 @@ public sealed class Settings
     public int UltraCapHours { get; set; } = Ultra.DefaultCapHours;   // Ultra time limit: 6, 12, 20 or 24 hours
     public int HighAccuracyCapMinutes { get; set; } = HighAccuracy.DefaultCapMinutes;   // High Accuracy wall-time cap: 5, 10, 20 or 30 (HighAccuracy.SnapCapMinutes)
     public int AccurateCells { get; set; }         // Expert: Accurate-pass cell budget; 0 = auto (startup tier)
+    public bool CheckUpdates { get; set; } = true;   // ask GitHub for a newer release when the window opens (UpdateCheck.cs)
     public bool TourSeen { get; set; }             // the first-run tour was finished or skipped once (Tour.cs); replay from Settings
 
     static readonly JsonSerializerOptions Json = new() { WriteIndented = true };

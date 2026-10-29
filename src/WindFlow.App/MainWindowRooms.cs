@@ -57,6 +57,16 @@ public partial class MainWindow
         if (live != null) live.RoomNames = new Dictionary<string, string>(roomDisplay, StringComparer.Ordinal);
     }
 
+    /// <summary>Display threshold only (not used by the solver): more than half of the air entering a room comes through gaps that are not listed openings
+    /// (the same share the "not recognised as openings" note reports).</summary>
+    const float LeakShare = 0.5f;
+    const string LeakVerdict = "unreliable: most air leaks through gaps that are not openings";
+    static bool LeaksThroughGaps(RoomResult r)
+    {
+        float entering = r.Inflow + r.InternalExchange + r.UnlistedInflow;
+        return entering > 1e-6f && r.UnlistedInflow > LeakShare * entering;
+    }
+
     string DisplayName(string id, string fallback) => roomDisplay.TryGetValue(id, out var n) ? n : fallback;
 
     int RoomRank(string id) => roomRank.TryGetValue(id, out int r) ? r : int.MaxValue;

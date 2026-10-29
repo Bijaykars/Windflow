@@ -30,7 +30,7 @@ public partial class ImportDialog : Window
 
         int guess = MeshImport.GuessUnit(imported);
         UnitBox.SelectedIndex = guess;
-        GuessText.Text = MeshImport.DeclaredUnit(imported) >= 0 ? $"{MeshImport.Units[guess].Label}, as the file declares"   // S3-05
+        GuessText.Text = MeshImport.DeclaredUnit(imported) >= 0 ? (imported.WrittenBySketchUp ? $"from the file (SketchUp: {MeshImport.Units[guess].Label})" : $"{MeshImport.Units[guess].Label}, as the file declares")   // S3-05
             : imported.WrittenByAutodeskAtf ? "from the file (Autodesk ATF / Revit: feet)"
             : guess == 0 ? "guessed from the size" : $"guessed {MeshImport.Units[guess].Label} from the size";
         YUpBox.IsChecked = MeshImport.GuessYUp(imported, MeshImport.Units[guess].Metres, out string upReason);   // D5
@@ -105,6 +105,7 @@ public partial class ImportDialog : Window
         settings.YUpToZUp = YUpBox.IsChecked == true;
         settings.DetectRooms = DetectBox.IsChecked == true;
         settings.RemovePanes = PaneBox.IsChecked == true;
+        settings.RemoveComponents = ComponentBox.IsChecked == true;
         settings.Storeys = ParseStoreys();
         Close(true);
     }

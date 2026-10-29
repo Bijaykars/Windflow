@@ -61,8 +61,14 @@ public static class OpeningDetect
 
     /// <summary>Deepest a hole in a wall can be, metres along its normal (IMP-B D4: it was 4 cells, 1.0 m at 250 mm but 0.2 m at 50 mm).</summary>
     public const float MaxThicknessM = 0.8f;
+    /// <summary>The widest or tallest hole in a wall taken for one: air further than this from a solid cell on either side is open space, not a reveal.</summary>
+    public const float HoleMaxWidthM = 8f;
+    /// <summary>A solid cell whose solid neighbourhood is at least SlabMinRunM along both horizontal axes and no thicker than SlabMaxThickM vertically is part of a slab (a roof, a ledge), not a wall.</summary>
+    public const float SlabMinRunM = 0.4f, SlabMaxThickM = 0.3f;
     /// <summary>The merge rule: pieces separated by at most this many blocked cells are one opening.</summary>
     public const int MergeGapCells = 1;
+    /// <summary>Pieces stacked one above the other are one opening only when their widths agree to this many cells at each end.</summary>
+    public const int TransomWidthSlackCells = 2;
     /// <summary>How far each side is searched for a room or the outdoors, metres.</summary>
     public const float SideWalkM = 2f;
 
@@ -104,7 +110,7 @@ public static class OpeningDetect
 
     /// <summary>Gaps on one storey; <paramref name="kLowest"/> is the layer of the storey's elevation, the lowest the clear band may reach. <paramref name="covered"/> is RoomDetect's "solid somewhere above" map at
     /// <paramref name="kPlane"/> (the 1.1 m plane): it is the storey's footprint and the outdoors test.</summary>
-    public static List<Gap> Find(VoxelGrid grid, int storey, string storeyName, int kPlane, bool[] covered, List<string> notes, int kLowest = 0)
+    public static List<Gap> Find(VoxelGrid grid, int storey, string storeyName, int kPlane, bool[] covered, List<string> notes, int kLowest = 0, int kHighest = int.MaxValue)
     {
         int nx = grid.Nx, ny = grid.Ny;
         float Frac(int k)
@@ -121,9 +127,50 @@ public static class OpeningDetect
         if (Frac(kPlane) >= 0.5f) { notes.Add($"{storeyName}: no clear band at the 1.1 m plane, openings not searched"); return []; }
         int kF = kPlane, kC = kPlane;
         while (kF - 1 >= kLowest && Frac(kF - 1) < 0.5f) kF--;   // IMP-B: never below the storey's own floor (a slab under half the footprint let the band run down to the ground)
-        while (kC + 1 < grid.Nz && Frac(kC + 1) < 0.5f) kC++;
+        while (kC + 1 < grid.Nz && kC + 1 <= kHighest && Frac(kC + 1) < 0.5f) kC++;
 
-        // Wall-with-a-hole columns: solid somewhere in the clear band and air somewhere in it.
+        // A horizontal slab inside the band (a porch or lean-to roof, a ledge, a mezzanine, a strip of floor that does not cover half the footprint) is no wall and
+        // no soffit: its air would join every hole beside it into one wide gap, and a roof that ends at a window head would call the window's columns sloped.
+        // A solid cell is slab when the solid around it runs at least SlabMinRunM along BOTH horizontal axes (a wall is long one way and thin the other) and the
+        // column through it is solid for no more than SlabMaxThickM (a wall is solid from floor to head).
+        int layerCells = nx * ny, bandLayers = kC - kF + 1;
+        int slabRun = Math.Max(2, (int)MathF.Ceiling(SlabMinRunM / grid.Dx - 1e-3f));
+        int slabThick = Math.Max(1, (int)MathF.Floor(SlabMaxThickM / grid.Dx + 1e-3f));
+        var slab = new bool[layerCells * bandLayers];
+        {
+            var runX = new int[layerCells];
+            var runY = new int[layerCells];
+            bool Sol(int x, int y, int k) => grid.Cell[grid.Index(x, y, k)] == VoxelGrid.Solid;
+            for (int k = kF; k <= kC; k++)
+            {
+                for (int y = 0; y < ny; y++)
+                    for (int x = 0; x < nx;)
+                    {
+                        int x0 = x; bool sol = Sol(x, y, k);
+                        while (x < nx && Sol(x, y, k) == sol) x++;
+                        for (int xx = x0; xx < x; xx++) runX[y * nx + xx] = x - x0;
+                    }
+                for (int x = 0; x < nx; x++)
+                    for (int y = 0; y < ny;)
+                    {
+                        int y0 = y; bool sol = Sol(x, y, k);
+                        while (y < ny && Sol(x, y, k) == sol) y++;
+                        for (int yy = y0; yy < y; yy++) runY[yy * nx + x] = y - y0;
+                    }
+                for (int f = 0; f < layerCells; f++)
+                {
+                    int x = f % nx, y = f / nx;
+                    if (!Sol(x, y, k) || runX[f] < slabRun || runY[f] < slabRun) continue;
+                    int n = 1;   // the column's solid run through this layer, counted up to one past the limit
+                    for (int kk = k - 1; kk >= 0 && n <= slabThick && Sol(x, y, kk); kk--) n++;
+                    for (int kk = k + 1; kk < grid.Nz && n <= slabThick && Sol(x, y, kk); kk++) n++;
+                    if (n <= slabThick) slab[(k - kF) * layerCells + f] = true;
+                }
+            }
+        }
+        bool WallSolid(int f, int k) => grid.Cell[grid.Index(f % nx, f / nx, k)] == VoxelGrid.Solid && !slab[(k - kF) * layerCells + f];
+
+        // Wall-with-a-hole columns: solid (not slab) somewhere in the clear band and air somewhere in it.
         // IMP-B D9: a sloped roof or gable is not a wall. Per column, the soffit is the bottom layer of the topmost solid run in the band (-1: no
         // solid); a column whose soffit steps by one or two layers against a neighbour's is on a slope (a door head is flat, the jambs beside it
         // step by the whole door height) and is no wall. The air above the top solid of a column (the sky over a gable) is no aperture either.
@@ -136,9 +183,9 @@ public static class OpeningDetect
             while (top >= 0 && grid.Cell[grid.Index(f % nx, f / nx, top)] != VoxelGrid.Solid) top--;
             topSolid[f] = top;
             int k = Math.Min(kC, top);
-            while (k >= kF && grid.Cell[grid.Index(f % nx, f / nx, k)] != VoxelGrid.Solid) k--;
+            while (k >= kF && !WallSolid(f, k)) k--;
             if (k < kF) continue;
-            while (k - 1 >= kF && grid.Cell[grid.Index(f % nx, f / nx, k - 1)] == VoxelGrid.Solid) k--;
+            while (k - 1 >= kF && WallSolid(f, k - 1)) k--;
             soffit[f] = k;
         }
         bool Sloped(int f)
@@ -160,18 +207,59 @@ public static class OpeningDetect
         }
         var wall = new bool[nx * ny];
         var free = new bool[nx * ny];   // covered and air over the whole band: no sill, no head
+        var candidate = new bool[nx * ny];   // solid that is not slab and air in the band, before the slope test
         for (int f = 0; f < wall.Length; f++)
         {
             if (!covered[f]) continue;
-            bool solid = false, air = false;
-            for (int k = kF; k <= kC && !(solid && air); k++)
-                if (grid.Cell[grid.Index(f % nx, f / nx, k)] == VoxelGrid.Solid) solid = true; else air = true;
-            wall[f] = solid && air && !Sloped(f);
+            bool solid = false, wallSolid = false, air = false;
+            for (int k = kF; k <= kC; k++)
+                if (grid.Cell[grid.Index(f % nx, f / nx, k)] == VoxelGrid.Solid) { solid = true; if (!slab[(k - kF) * layerCells + f]) wallSolid = true; } else air = true;
+            wall[f] = wallSolid && air && !Sloped(f);
             free[f] = !solid;
+            candidate[f] = wallSolid && air;
+        }
+        // One column the slope test threw out between two wall columns (a gable's last roof cell over a window; a barge board) is part of that wall.
+        var wallBefore = (bool[])wall.Clone();
+        for (int f = 0; f < wall.Length; f++)
+        {
+            if (!candidate[f] || wall[f]) continue;
+            int x = f % nx, y = f / nx;
+            if ((x > 0 && x + 1 < nx && wallBefore[f - 1] && wallBefore[f + 1]) || (y > 0 && y + 1 < ny && wallBefore[f - nx] && wallBefore[f + nx])) wall[f] = true;
+        }
+        // A hole in a wall is bounded by its reveals: along the wall by the jambs, and up and down by the sill (or the floor) and the head. Air in a wall column
+        // that is not enclosed that way on at least one wall axis (the air over a porch beside a post, between rails, under an eave) is no hole, however it
+        // touches the real ones; without this the gap leaks through every post and the whole porch reads as one gap far thicker than a wall.
+        int reach = (int)MathF.Ceiling(HoleMaxWidthM / grid.Dx);
+        var tunnel = new sbyte[layerCells * bandLayers];   // 0 not asked, 1 yes, -1 no
+        bool Solid(int x, int y, int k) => x >= 0 && y >= 0 && x < nx && y < ny && k >= 0 && k < grid.Nz && grid.Cell[grid.Index(x, y, k)] == VoxelGrid.Solid;   // off the grid is open air
+        bool Bounded(int x, int y, int k, int dx, int dy)   // solid within reach on both sides along (dx, dy); the band's floor and top count as solid
+        {
+            for (int sgn = -1; sgn <= 1; sgn += 2)
+            {
+                int n = 1;
+                while (n <= reach && !Solid(x + sgn * dx * n, y + sgn * dy * n, k)) n++;
+                if (n > reach) return false;
+            }
+            return true;
+        }
+        bool BoundedUp(int x, int y, int k)
+        {
+            int n = 1;
+            while (k - n >= kF && !Solid(x, y, k - n)) n++;   // the floor under the band's first layer counts as the sill
+            if (n > reach) return false;
+            n = 1;
+            while (k + n <= kC && !Solid(x, y, k + n)) n++;   // the band's top layer counts as the head
+            return n <= reach;
+        }
+        bool IsHoleCell(int x, int y, int k)
+        {
+            ref sbyte memo = ref tunnel[(k - kF) * layerCells + y * nx + x];
+            if (memo == 0) memo = (sbyte)(BoundedUp(x, y, k) && (Bounded(x, y, k, 0, 1) || Bounded(x, y, k, 1, 0)) ? 1 : -1);
+            return memo > 0;
         }
         bool Aperture(int x, int y, int k) =>
             x >= 0 && y >= 0 && x < nx && y < ny && k >= kF && k <= kC && wall[y * nx + x] && k < topSolid[y * nx + x] &&
-            grid.Cell[grid.Index(x, y, k)] != VoxelGrid.Solid;
+            grid.Cell[grid.Index(x, y, k)] != VoxelGrid.Solid && IsHoleCell(x, y, k);
         bool OpenAir(int x, int y, int k) =>
             x >= 0 && y >= 0 && x < nx && y < ny && k >= 0 && k < grid.Nz &&
             grid.Cell[grid.Index(x, y, k)] != VoxelGrid.Solid && !Aperture(x, y, k);
@@ -315,7 +403,9 @@ public static class OpeningDetect
                 if (same && Math.Max(a.Across.N1, b.Across.N1) - Math.Min(a.Across.N0, b.Across.N0) + 1 <= maxThickCells) parent[Root(j)] = Root(i);
                 continue;
             }
-            if ((along <= MergeGapCells && up < 0) || (up <= MergeGapCells && along < 0))
+            // A transom (one above the other) is as wide as the piece under it, to a cell or two at the frame: a window under a 12 m open slot is two things.
+            bool sameWidth = Math.Abs(a.Along.A0 - b.Along.A0) <= TransomWidthSlackCells && Math.Abs(a.Along.A1 - b.Along.A1) <= TransomWidthSlackCells;
+            if ((along <= MergeGapCells && up < 0) || (up <= MergeGapCells && along < 0 && sameWidth))
                 parent[Root(j)] = Root(i);
         }
 

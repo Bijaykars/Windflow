@@ -27,7 +27,10 @@ public static class MeshImport
     {
         ImportGuard.Check(path);   // B8 / S3-07: refuse a hostile header before the native importer sees it
         using var api = Assimp.GetApi();
-        uint flags = (uint)(PostProcessSteps.Triangulate | PostProcessSteps.PreTransformVertices |
+        // An OBJ has no node transforms, so it keeps its node tree (the group names say which meshes are windows and doors);
+        // every other format is flattened as before.
+        bool isObj = Path.GetExtension(path).Equals(".obj", StringComparison.OrdinalIgnoreCase);
+        uint flags = (uint)(PostProcessSteps.Triangulate | (isObj ? 0 : PostProcessSteps.PreTransformVertices) |
                             PostProcessSteps.JoinIdenticalVertices | PostProcessSteps.RemoveComponent |
                             PostProcessSteps.FindDegenerates | PostProcessSteps.FindInvalidData |
                             PostProcessSteps.SortByPrimitiveType);
@@ -47,6 +50,9 @@ public static class MeshImport
             var paneIds = new HashSet<string>();
             var paneMaterials = new HashSet<uint>();
             var paneCache = new Dictionary<uint, bool>();
+            var chains = new Dictionary<uint, string>();
+            var names = new Dictionary<string, string>();
+            if (isObj) WalkNodes(scene->MRootNode, "", chains, true);
 
             for (uint m = 0; m < scene->MNumMeshes; m++)
             {
@@ -76,6 +82,10 @@ public static class MeshImport
                 if (indices.Count == 0) continue;
                 triangles += indices.Count / 3;
                 var id = Guid.NewGuid().ToString("N");
+                if (isObj) {
+                    string chain = chains.GetValueOrDefault(m, ""), own = AiName(mesh->MName);
+                    names[id] = chain.EndsWith(own, StringComparison.Ordinal) ? chain : chain + " / " + own;
+                }
                 // Panes: PreTransformVertices has merged the meshes per material, so the material is the unit to judge.
                 uint mi = mesh->MMaterialIndex;
                 if (!paneCache.TryGetValue(mi, out bool isPane))
@@ -100,9 +110,36 @@ public static class MeshImport
                     $"{Path.GetFileName(path)} has vertex coordinates that are not finite numbers (infinite or NaN); " +
                     "fix or re-export the file.");
             return new ImportedGeometry(Path.GetFileName(path), meshes, min, max, triangles, DeclaredMetres(path, scene),
-                paneIds, paneMaterials.Count, WrittenByIfcOpenShell(path), WrittenByAutodeskAtf(path));
+                paneIds, paneMaterials.Count, WrittenByIfcOpenShell(path), WrittenByAutodeskAtf(path), names, SketchUpHeader(path).Exported);
         }
         finally { api.ReleaseImport(scene); }
+    }
+
+    static unsafe string AiName(AssimpString s) => System.Text.Encoding.UTF8.GetString(s.Data, (int)Math.Min(s.Length, 1024u));
+
+    /// <summary>Maps every mesh index to the names of the nodes above it (root left out), joined with " / ".</summary>
+    static unsafe void WalkNodes(Node* n, string chain, Dictionary<uint, string> chains, bool root)
+    {
+        if (n == null) return;
+        if (!root) chain = chain.Length == 0 ? AiName(n->MName) : chain + " / " + AiName(n->MName);
+        for (uint i = 0; i < n->MNumMeshes; i++) chains[n->MMeshes[i]] = chain;
+        for (uint c = 0; c < n->MNumChildren; c++) WalkNodes(n->MChildren[c], chain, chains, false);
+    }
+
+    // ---------------------------------------------------------------- window and door components
+
+    static readonly HashSet<string> ComponentWords = new(["window", "windows", "door", "doors", "sash", "lite", "lites", "glazing", "casement", "mullion", "frame", "frames", "shutter"], StringComparer.Ordinal);
+    static readonly HashSet<string> NotBuildingWords = new(["vehicle", "vehicles", "car", "cars", "chassis"], StringComparer.Ordinal);
+    static readonly System.Text.RegularExpressions.Regex CamelBreak = new(@"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    static string[] NameWords(string name) => NonLetters.Split(CamelBreak.Replace(name, " ").ToLowerInvariant());
+
+    /// <summary>True when a mesh/node name (with its ancestors) is a window or door component: a whole word from <c>ComponentWords</c> and
+    /// no vehicle word anywhere in the chain. The size test (a wall named "frame wall") is the caller's.</summary>
+    public static bool IsComponentName(string name)
+    {
+        var words = NameWords(name);
+        return words.Any(ComponentWords.Contains) && !words.Any(NotBuildingWords.Contains);
     }
 
     // ---------------------------------------------------------------- panes
@@ -156,6 +193,7 @@ public static class MeshImport
     static unsafe float DeclaredMetres(string path, Silk.NET.Assimp.Scene* scene)
     {
         string ext = Path.GetExtension(path).ToLowerInvariant();
+        if (ext == ".obj") return SketchUpHeader(path).Metres;
         if (ext is ".gltf" or ".glb") return 1f;
         if (ext != ".fbx" || scene->MMetaData == null) return 0f;
         var md = scene->MMetaData;
@@ -175,6 +213,30 @@ public static class MeshImport
             return cmPerUnit > 0 && double.IsFinite(cmPerUnit) ? (float)(cmPerUnit / 100.0) : 0f;
         }
         return 0f;
+    }
+
+    /// <summary>SketchUp's OBJ header: "# File units = inches" (or feet, millimeters, centimeters, meters; "metres" too) within the first lines, and
+    /// "# Exported from SketchUp". Metres is 0 when no unit line is there or it names a unit not known.</summary>
+    public static (float Metres, bool Exported) SketchUpHeader(string path)
+    {
+        float metres = 0f;
+        bool exported = false;
+        if (!path.EndsWith(".obj", StringComparison.OrdinalIgnoreCase)) return (0f, false);
+        try
+        {
+            using var r = new StreamReader(path);
+            for (int i = 0; i < 10 && r.ReadLine() is { } line; i++)
+            {
+                if (line.Contains("Exported from SketchUp", StringComparison.OrdinalIgnoreCase)) exported = true;
+                var m = System.Text.RegularExpressions.Regex.Match(line, @"^#\s*File units\s*=\s*(\S+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+                if (!m.Success) continue;
+                string u = m.Groups[1].Value.ToLowerInvariant().Replace("metre", "meter", StringComparison.Ordinal);
+                metres = u.Contains("inch") ? 0.0254f : u.Contains("feet") || u.Contains("foot") ? 0.3048f : u.Contains("millimeter") ? 0.001f
+                       : u.Contains("centimeter") ? 0.01f : u.Contains("meter") ? 1f : 0f;
+            }
+        }
+        catch (IOException) { }
+        return (metres, exported);
     }
 
     /// <summary>The unit choices the dialog offers, and the metres-per-unit each one means.</summary>
@@ -235,8 +297,11 @@ public static class MeshImport
         // Glass that seals a window opening hides it from the opening detector; drop it (never everything: a model that is only glass stays).
         bool dropPanes = settings.RemovePanes && geometry.PaneMeshIds.Count > 0 && geometry.PaneMeshIds.Count < geometry.Meshes.Count;
         double paneArea = 0;
+        var components = settings.RemoveComponents ? ComponentIds(geometry, settings) : [];
+        if (components.Count >= geometry.Meshes.Count) components = [];   // never everything
         foreach (var mesh in geometry.Meshes)
         {
+            if (components.Contains(mesh.Id) && !(dropPanes && geometry.PaneMeshIds.Contains(mesh.Id))) continue;
             if (dropPanes && geometry.PaneMeshIds.Contains(mesh.Id))
             {
                 for (int t = 0; t + 2 < mesh.Indices.Length; t += 3)
@@ -255,6 +320,10 @@ public static class MeshImport
 
         if (dropPanes)
             settings.Notes.Add($"removed {paneArea:0.#} m² of glass ({geometry.PaneMaterials} transparent material{(geometry.PaneMaterials == 1 ? "" : "s")}) so windows stay open (untick \"Remove glass panes\" to keep them)");
+
+        int componentCount = components.Select(id => geometry.MeshNames[id]).Distinct().Count();
+        if (components.Count > 0)
+            settings.Notes.Add($"{componentCount} window/door component{(componentCount == 1 ? "" : "s")} removed so their holes read as openings (untick \"Treat window and door components as openings\" to keep them)");
 
         // Drop the model onto z = 0 so the solver's ground plane and the camera framing behave, and so two
         // files imported one after another are comparable. A geo-referenced export (map coordinates, often hundreds of km)
@@ -285,6 +354,26 @@ public static class MeshImport
                 Analysed = true,
             });
         return model;
+    }
+
+    /// <summary>Ids of the meshes named as window/door components (see <see cref="IsComponentName"/>), except any larger than 4 m in two dimensions.
+    /// Every removal and skip goes to <see cref="ImportSettings.Log"/>.</summary>
+    static HashSet<string> ComponentIds(ImportedGeometry g, ImportSettings s)
+    {
+        var ids = new HashSet<string>();
+        var logged = new HashSet<string>();   // one OBJ group is several meshes (one per material): one line each
+        foreach (var mesh in g.Meshes)
+        {
+            if (!g.MeshNames.TryGetValue(mesh.Id, out var name) || !IsComponentName(name)) continue;
+            var lo = new Vector3(float.MaxValue); var hi = new Vector3(float.MinValue);
+            foreach (var v in mesh.Vertices) { lo = Vector3.Min(lo, v); hi = Vector3.Max(hi, v); }
+            var size = (hi - lo) * s.MetresPerUnit;
+            if ((size.X > 4f ? 1 : 0) + (size.Y > 4f ? 1 : 0) + (size.Z > 4f ? 1 : 0) >= 2)
+            { if (logged.Add(name)) s.Log.Add($"component kept (larger than 4 m in two dimensions): {name.Trim()}"); continue; }
+            if (logged.Add(name)) s.Log.Add($"component removed: {name.Trim()} ({size.X:0.##} x {size.Y:0.##} x {size.Z:0.##} m)");
+            ids.Add(mesh.Id);
+        }
+        return ids;
     }
 
     /// <summary>Unit scale, then Y-up to Z-up if asked. glTF is Y-up by specification; FBX and OBJ are
@@ -431,8 +520,11 @@ public static class MeshImport
 
 /// <summary>Triangles as they came out of the file, before units or axes are applied.</summary>
 public sealed record ImportedGeometry(string FileName, List<CoreMesh> Meshes, Vector3 Min, Vector3 Max, int Triangles, float DeclaredMetres = 0f,
-    HashSet<string>? PaneIds = null, int PaneMaterials = 0, bool WrittenByIfcOpenShell = false, bool WrittenByAutodeskAtf = false)
+    HashSet<string>? PaneIds = null, int PaneMaterials = 0, bool WrittenByIfcOpenShell = false, bool WrittenByAutodeskAtf = false,
+    Dictionary<string, string>? Names = null, bool WrittenBySketchUp = false)
 {
+    /// <summary>OBJ only: mesh id to "ancestor nodes / mesh name" (the group names).</summary>
+    public Dictionary<string, string> MeshNames { get; } = Names ?? [];
     /// <summary>Ids of the meshes whose material is transparent or named window/glass (see <see cref="MeshImport.IsPaneName"/>).</summary>
     public HashSet<string> PaneMeshIds { get; } = PaneIds ?? [];
 }
@@ -448,6 +540,10 @@ public sealed class ImportSettings
     public bool DetectRooms = true;
     /// <summary>Drop transparent / window / door / glass materials so panes do not seal the openings.</summary>
     public bool RemovePanes = true;
+    /// <summary>Remove meshes named as window/door components so the wall hole behind them is found as an opening.</summary>
+    public bool RemoveComponents = true;
+    /// <summary>Which components were removed or kept, one line each (the --import-test report).</summary>
+    public List<string> Log = new();
     public List<StoreyPlan> Storeys = new();
     /// <summary>What the last <see cref="MeshImport.GuessStoreys"/> left out (D12), for the import note.</summary>
     public List<string> Notes = new();
