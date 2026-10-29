@@ -81,7 +81,7 @@ the loaded model and survive live-link updates of the same document; they are no
 work the same way (the opening is highlighted as a filled quad); the switch on the row, or a click on the
 opening in the viewport, opens or closes it.
 
-**Settings → Live link (Revit)** listens for the WindFlow Revit add-in (docs/LIVELINK.md). The
+**Live link (Revit):** start WindFlow with `--livelink` to listen for the WindFlow Revit add-in (docs/LIVELINK.md). The
 status strip reads "live link: waiting for Revit" / "connected · <document>". A model from Revit replaces the
 one on screen (the camera stays, devices you added in the app stay), a door/window toggle in Revit toggles
 it here, and picking a room, opening or device row selects it in Revit. Test without Revit:
