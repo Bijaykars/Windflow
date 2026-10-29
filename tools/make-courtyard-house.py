@@ -22,7 +22,7 @@ def wall_x(y, x0, x1, z0, z1, t=T): box(x0, x1, y - t/2, y + t/2, z0, z1)   # wa
 def wall_y(x, y0, y1, z0, z1, t=T): box(x - t/2, x + t/2, y0, y1, z0, z1)   # wall along Y at x
 
 def op(id_, name, level, door, open_, x, y, z, normal, w, h, depth=T):
-    openings.append({"Id": id_, "Name": name, "Level": level, "Kind": 1 if door else 0, "IsOpen": open_,
+    openings.append({"Id": id_, "Name": name, "Level": level, "Kind": 1 if door else 0, "IsOpen": bool(open_),
                      "Center": {"X": x, "Y": y, "Z": z}, "Normal": dict(zip("XYZ", normal)),
                      "Width": w, "Height": h, "Depth": depth, "DischargeCoefficient": None})
 

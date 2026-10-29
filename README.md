@@ -6,6 +6,10 @@ WindFlow is a free Windows app that shows architects how wind moves air through 
 
 **Move the window. See the air.**
 
+[![A 12-second turntable of the courtyard house with live airflow](media/courtyard-turntable-poster.jpg)](media/courtyard-turntable-web.mp4)
+
+*The courtyard house ([media/courtyard-house.windflow.json](media/courtyard-house.windflow.json), made by [tools/make-courtyard-house.py](tools/make-courtyard-house.py)) turning while the air runs. Click for the video.*
+
 ![WindFlow showing the sample house](docs/images/windflow.png)
 
 > WindFlow is a design-stage airflow tool. Its results are estimates with stated uncertainty, not a substitute for a ventilation engineer or a code-compliance calculation.
