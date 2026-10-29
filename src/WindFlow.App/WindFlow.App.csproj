@@ -44,6 +44,8 @@
     <None Include="..\..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <!-- the designed 2-page "How WindFlow works" explainer travels with the exe (the method-pdf option copies it; Settings opens it). -->
     <None Include="..\..\docs\how-windflow-works.pdf" Link="how-windflow-works.pdf" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <!-- the full Technical Reference (method, equations, validation, limits) travels with the exe; Settings opens it. -->
+    <None Include="..\..\docs\WindFlow-Technical-Reference.pdf" Link="WindFlow-Technical-Reference.pdf" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <!-- the same icon for the exe (ApplicationIcon) and the window title bar / taskbar (MainWindow Icon) -->

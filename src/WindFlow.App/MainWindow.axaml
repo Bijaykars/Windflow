@@ -75,6 +75,16 @@
                         ToolTip.Tip="Everything else: simulation box, devices, slices, probes, compare, best windows, annual, video." />
           <ToggleButton x:Name="PanelToggle" Classes="tool" Content="Panel" IsChecked="True" Click="OnTogglePanel"
                         ToolTip.Tip="Show or hide the side panel." />
+          <Button x:Name="HelpButton" Classes="tool" Padding="10,7" ToolTip.Tip="Help: how WindFlow works, the Technical Reference and the tour">
+            <TextBlock Classes="glyph" Text="&#xE897;" />
+            <Button.Flyout>
+              <MenuFlyout Placement="BottomEdgeAlignedRight">
+                <MenuItem x:Name="HelpMethodItem" Header="How WindFlow works (2-page PDF)" Click="OnOpenMethod" />
+                <MenuItem x:Name="HelpTechRefItem" Header="Technical Reference (PDF)" Click="OnOpenTechRef" />
+                <MenuItem x:Name="HelpTourItem" Header="Take the tour" Click="OnTakeTour" />
+              </MenuFlyout>
+            </Button.Flyout>
+          </Button>
           <Button x:Name="GearButton" Classes="tool" Padding="10,7" Click="OnSettings" ToolTip.Tip="Settings">
             <TextBlock Classes="glyph" Text="&#xE713;" />
           </Button>
@@ -1030,6 +1040,9 @@
           <Button x:Name="MethodButton" Classes="link" Content="How WindFlow works (PDF)" Click="OnOpenMethod"
                   HorizontalAlignment="Left" Margin="0,2,0,0"
                   ToolTip.Tip="Opens how-windflow-works.pdf, the 2-page explainer of the method and its limits." />
+          <Button x:Name="TechRefButton" Classes="link" Content="Technical Reference (PDF)" Click="OnOpenTechRef"
+                  HorizontalAlignment="Left" Margin="0,2,0,0"
+                  ToolTip.Tip="Opens WindFlow-Technical-Reference.pdf: the full method, the equations, the validation and the known limits." />
           <Button x:Name="TourButton" Classes="link" Content="Take the tour" Click="OnTakeTour"
                   HorizontalAlignment="Left" Margin="0,2,0,0"
                   ToolTip.Tip="Ten short steps that point out where things are. It also shows once, on first launch." />

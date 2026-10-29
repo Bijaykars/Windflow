@@ -101,8 +101,8 @@ public partial class MainWindow
             () => [ReportButton]),
         new("Basic, Expert and Settings",
             "Basic keeps to loading, wind, openings, running, rooms and the PDF. Expert adds two panel sections, Devices and Studies, shown next. " +
-            "The gear opens Settings: how much of the graphics card to use, the “How WindFlow works” PDF, and this tour again.",
-            () => [BasicToggle, GearButton]),
+            "The ? button opens the “How WindFlow works” PDF, the Technical Reference and this tour again; the gear opens Settings: how much of the graphics card to use.",
+            () => [BasicToggle, HelpButton, GearButton]),
         new("Devices (Expert)",
             "Ceiling and pedestal fans, split and cassette air conditioners, an exhaust fan, a kitchen hood and a ceiling diffuser. " +
             "Pick a tile, then click where it goes in a room; each one pushes or pulls air in the run.",

@@ -1796,6 +1796,7 @@ public partial class MainWindow : Window
     void OnOpenLicence(object? sender, RoutedEventArgs e) => OpenShipped("LICENSE.txt", "licence");
 
     void OnOpenMethod(object? sender, RoutedEventArgs e) => OpenShipped("how-windflow-works.pdf", "How WindFlow works PDF");
+    void OnOpenTechRef(object? sender, RoutedEventArgs e) => OpenShipped("WindFlow-Technical-Reference.pdf", "Technical Reference PDF");
 
     void OpenShipped(string file, string what)
     {
