@@ -67,18 +67,18 @@ Then click **Open model...** (a `model.json` file) or **Sample**. Set the wind a
 
 ## Requirements
 
-- Windows, 64-bit. TODO(owner): state the minimum Windows version; the project files do not say.
+- Windows, 64-bit.
 - .NET SDK 10 for the app (`net10.0-windows`). The other projects use .NET 8.
 - A graphics card. An NVIDIA card (CUDA) is recommended. Without one, WindFlow runs on the CPU, which is slower.
-- Disk and RAM: not stated anywhere in the project yet. TODO(owner).
 
 ## How accurate is it?
 
-Use WindFlow to compare design options on the same model: "does this window help more than that one?" It is less good at giving one exact number.
+Best for comparing options. Which window layout ventilates better? Not for code compliance.
+
+Compare options on the same model. WindFlow is less good at giving one exact number:
 
 - One room: a small change in grid size can move its number by up to about 35 %.
 - The whole building: by about 20 %.
-- **Standard** (steady wind) headlines the age followed through time (online, with the turbulent mixing) in each room where it settled, and falls back to the steady age, marked "steady age", in a room where it did not. Standard switches a room to the online age only when that room's online age has settled within the run's time budget; on a ~5 M cell grid this typically needs 30-50 min of run time, so shorter runs mostly report the steady age (marked "steady age"). The steady age can differ from the age followed through time by about 30 % either way per room: lower in slowly recirculating rooms, higher in fast-flushed ones. Fresh-air ACH = 3600 / mean age equals an air-change rate only when the room's air is fully mixed; otherwise it is the room's mean-age equivalent (Etheridge & Sandberg 1996; Hurraß 2026). **High** (gusty wind) headlines the age followed through the gusts and shows the steady-age value beside it; that value ignores gust mixing and usually reads lower (up to about 3 times), but not in every room.
 
 Not checked yet: fresh-air numbers against real tracer-gas measurements, and heated rooms (one heat test still fails).
 Read the full list in [docs/LIMITATIONS.md](docs/LIMITATIONS.md) and the test results in [VALIDATION.md](VALIDATION.md).
